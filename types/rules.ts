@@ -21,6 +21,11 @@ export type RuleAction =
   | {
       type: 'injectJavaScript';
       script: string;
+    }
+  | {
+      type: 'delayRequest';
+      requestPattern: string;
+      delayMs: number;
     };
 
 export type QueryParameter = {

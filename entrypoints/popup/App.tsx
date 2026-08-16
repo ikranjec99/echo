@@ -32,6 +32,7 @@ const ACTION_OPTIONS: Array<{
   icon: string;
   title: string;
   description: string;
+  experimental?: boolean;
 }> = [
   {
     type: 'block',
@@ -71,9 +72,16 @@ const ACTION_OPTIONS: Array<{
   },
   {
     type: 'injectJavaScript',
-    icon: '</>',
+    icon: 'JS',
     title: 'Inject JavaScript',
     description: 'Run local code in an isolated user-script world.',
+  },
+  {
+    type: 'delayRequest',
+    icon: 'MS',
+    title: 'Delay request',
+    description: 'Delay matching page fetch and XHR calls.',
+    experimental: true,
   },
 ];
 
@@ -226,7 +234,15 @@ export default function App() {
                       type: 'injectJavaScript' as const,
                       script: String(formData.get('script') ?? ''),
                     }
-                  : { type: 'block' as const };
+                  : actionType === 'delayRequest'
+                    ? {
+                        type: 'delayRequest' as const,
+                        requestPattern: String(
+                          formData.get('requestPattern') ?? '',
+                        ).trim(),
+                        delayMs: Number(formData.get('delayMs')),
+                      }
+                    : { type: 'block' as const };
     const draft: RuleDraft = {
       name: String(formData.get('name') ?? '').trim(),
       enabled: editingRule?.enabled ?? true,
@@ -263,6 +279,12 @@ export default function App() {
     const scriptInput = form.elements.namedItem(
       'script',
     ) as HTMLTextAreaElement;
+    const requestPatternInput = form.elements.namedItem(
+      'requestPattern',
+    ) as HTMLInputElement;
+    const delayMsInput = form.elements.namedItem(
+      'delayMs',
+    ) as HTMLInputElement;
 
     nameInput.setCustomValidity(errors.name ?? '');
     urlPatternInput.setCustomValidity(errors.urlPattern ?? '');
@@ -277,6 +299,8 @@ export default function App() {
     );
     cssInput?.setCustomValidity(errors.css ?? '');
     scriptInput?.setCustomValidity(errors.script ?? '');
+    requestPatternInput?.setCustomValidity(errors.requestPattern ?? '');
+    delayMsInput?.setCustomValidity(errors.delayMs ?? '');
 
     if (!form.reportValidity()) {
       return;
@@ -308,49 +332,56 @@ export default function App() {
 
   return (
     <main className="popup">
-      <header className="app-header">
-        <div>
-          <p className="eyebrow">HTTP request interceptor</p>
-          <h1>Echo</h1>
-        </div>
+      <div className="popup-fixed">
+        <header className="app-header">
+          <div>
+            <p className="eyebrow">HTTP request interceptor</p>
+            <h1>Echo</h1>
+          </div>
 
-        {rules.length > 0 && (
-          <button className="primary-button compact-button" onClick={openRuleDialog}>
-            Add rule
-          </button>
-        )}
-      </header>
+          {rules.length > 0 && (
+            <button
+              className="primary-button compact-button"
+              onClick={openRuleDialog}
+            >
+              Add rule
+            </button>
+          )}
+        </header>
 
-      <section
-        className={`interception-control ${interceptionEnabled ? 'is-active' : 'is-paused'}`}
-        aria-labelledby="interception-status"
-      >
-        <div>
-          <p className="interception-label" id="interception-status">
-            Echo is {interceptionEnabled ? 'active' : 'paused'}
-          </p>
-          <p className="interception-description">
-            {interceptionEnabled
-              ? 'Enabled rules are applied to browser requests.'
-              : 'All rules are temporarily inactive.'}
-          </p>
-        </div>
+        <section
+          className={`interception-control ${interceptionEnabled ? 'is-active' : 'is-paused'}`}
+          aria-labelledby="interception-status"
+        >
+          <div>
+            <p className="interception-label" id="interception-status">
+              Echo is {interceptionEnabled ? 'active' : 'paused'}
+            </p>
+            <p className="interception-description">
+              {interceptionEnabled
+                ? 'Enabled rules are applied to browser requests.'
+                : 'All rules are temporarily inactive.'}
+            </p>
+          </div>
 
-        <label className="switch master-switch">
-          <span className="sr-only">
-            {interceptionEnabled ? 'Pause' : 'Resume'} Echo
-          </span>
-          <input
-            type="checkbox"
-            checked={interceptionEnabled}
-            disabled={interceptionStatus === 'loading'}
-            onChange={(event) =>
-              void setInterceptionEnabled(event.currentTarget.checked)
-            }
-          />
-          <span className="switch-track" aria-hidden="true" />
-        </label>
-      </section>
+          <label className="switch master-switch">
+            <span className="sr-only">
+              {interceptionEnabled ? 'Pause' : 'Resume'} Echo
+            </span>
+            <input
+              type="checkbox"
+              checked={interceptionEnabled}
+              disabled={interceptionStatus === 'loading'}
+              onChange={(event) =>
+                void setInterceptionEnabled(event.currentTarget.checked)
+              }
+            />
+            <span className="switch-track" aria-hidden="true" />
+          </label>
+        </section>
+      </div>
+
+      <div className="rules-scroll">
 
       {(errorMessage || interceptionErrorMessage) && (
         <p className="error-banner" role="alert">
@@ -386,6 +417,9 @@ export default function App() {
                     <span className={`rule-type rule-type-${rule.action.type}`}>
                       {rule.action.type}
                     </span>
+                    {rule.action.type === 'delayRequest' && (
+                      <span className="experimental-badge">Experimental</span>
+                    )}
                   </div>
                   <code>{rule.urlPattern}</code>
                   {rule.action.type === 'redirect' && (
@@ -431,6 +465,11 @@ export default function App() {
                       {rule.action.script.length} JavaScript characters
                     </p>
                   )}
+                  {rule.action.type === 'delayRequest' && (
+                    <p className="redirect-target">
+                      {rule.action.delayMs} ms · {rule.action.requestPattern}
+                    </p>
+                  )}
                 </div>
 
                 <div className="rule-controls">
@@ -472,6 +511,7 @@ export default function App() {
           </ul>
         </section>
       )}
+      </div>
 
       <dialog className="rule-dialog" ref={dialogRef}>
         <form
@@ -513,8 +553,13 @@ export default function App() {
                     type="button"
                     onClick={() => setSelectedActionType(option.type)}
                   >
-                    <span className="action-icon" aria-hidden="true">
-                      {option.icon}
+                    <span className="action-card-top">
+                      <span className="action-icon" aria-hidden="true">
+                        {option.icon}
+                      </span>
+                      {option.experimental && (
+                        <span className="experimental-badge">Experimental</span>
+                      )}
                     </span>
                     <strong>{option.title}</strong>
                     <span>{option.description}</span>
@@ -525,7 +570,7 @@ export default function App() {
           ) : (
             <>
               <button
-                className="selected-action"
+                className={`selected-action selected-action-${selectedActionType}`}
                 type="button"
                 onClick={() => setSelectedActionType(null)}
               >
@@ -542,6 +587,9 @@ export default function App() {
                     )?.title}
                   </strong>
                 </span>
+                {selectedActionType === 'delayRequest' && (
+                  <span className="experimental-badge">Experimental</span>
+                )}
                 <span className="change-action">Change</span>
               </button>
 
@@ -560,7 +608,8 @@ export default function App() {
               <label className="field">
                 <span>
                   {selectedActionType === 'injectCss' ||
-                  selectedActionType === 'injectJavaScript'
+                  selectedActionType === 'injectJavaScript' ||
+                  selectedActionType === 'delayRequest'
                     ? 'Page match pattern'
                     : 'URL pattern'}
                 </span>
@@ -568,7 +617,8 @@ export default function App() {
                   name="urlPattern"
                   placeholder={
                     selectedActionType === 'injectCss' ||
-                    selectedActionType === 'injectJavaScript'
+                    selectedActionType === 'injectJavaScript' ||
+                    selectedActionType === 'delayRequest'
                       ? '*://*.example.com/*'
                       : '||analytics.example.com^'
                   }
@@ -579,7 +629,8 @@ export default function App() {
                 />
                 <small>
                   {selectedActionType === 'injectCss' ||
-                  selectedActionType === 'injectJavaScript'
+                  selectedActionType === 'injectJavaScript' ||
+                  selectedActionType === 'delayRequest'
                     ? 'Uses browser extension match-pattern syntax.'
                     : 'Uses Chrome URL filter syntax.'}
                 </small>
@@ -793,6 +844,58 @@ export default function App() {
                       Local source only. Maximum size: 50 KB. Remote imports are
                       not provided by Echo.
                     </small>
+                  </label>
+                </div>
+              )}
+
+              {selectedActionType === 'delayRequest' && (
+                <div className="action-fields">
+                  <div className="experimental-warning" role="note">
+                    <strong>Experimental page-level simulation</strong>
+                    <span>
+                      Delays page fetch and XMLHttpRequest calls only. It does
+                      not delay navigation, images, service workers, or general
+                      browser traffic.
+                    </span>
+                  </div>
+
+                  <label className="field">
+                    <span>Request URL pattern</span>
+                    <input
+                      name="requestPattern"
+                      placeholder="*://api.example.com/*"
+                      defaultValue={
+                        editingRule?.action.type === 'delayRequest'
+                          ? editingRule.action.requestPattern
+                          : ''
+                      }
+                      autoComplete="off"
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                    <small>Uses * as a wildcard against the complete URL.</small>
+                  </label>
+
+                  <label className="field">
+                    <span>Delay in milliseconds</span>
+                    <input
+                      name="delayMs"
+                      type="number"
+                      min="1"
+                      max="30000"
+                      step="1"
+                      placeholder="1000"
+                      defaultValue={
+                        editingRule?.action.type === 'delayRequest'
+                          ? editingRule.action.delayMs
+                          : 1000
+                      }
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                    <small>Maximum delay: 30,000 ms.</small>
                   </label>
                 </div>
               )}

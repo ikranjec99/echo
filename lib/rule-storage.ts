@@ -91,8 +91,14 @@ function isRuleAction(value: unknown): value is RuleAction {
     return typeof action.css === 'string';
   }
 
+  if (action.type === 'injectJavaScript') {
+    return typeof action.script === 'string';
+  }
+
   return (
-    action.type === 'injectJavaScript' && typeof action.script === 'string'
+    action.type === 'delayRequest' &&
+    typeof action.requestPattern === 'string' &&
+    typeof action.delayMs === 'number'
   );
 }
 

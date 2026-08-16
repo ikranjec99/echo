@@ -81,6 +81,9 @@ Security requirements:
 
 ### Delay simulation
 
+Status: a limited page-level Fetch and XMLHttpRequest experiment is implemented
+in the current development build.
+
 Manifest V3 declarative request rules do not provide a general-purpose delay
 action. A browser-only implementation can therefore offer only constrained
 simulation, not reliable delay of every HTTP request or response.

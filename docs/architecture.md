@@ -141,6 +141,21 @@ remain until the page is reloaded or the script performs its own cleanup.
 See [`docs/user-script-threat-model.md`](./user-script-threat-model.md) for the
 security boundary and explicit non-goals.
 
+### Experimental request delay
+
+Locations: `entrypoints/delay-main.content.ts`, `lib/request-delay.ts`
+
+A packaged main-world bridge wraps page calls to `fetch` and `XMLHttpRequest`.
+The isolated content script sends only active delay configuration for the current
+page. A ready/config handshake prevents either execution world from missing the
+initial state. Request URL globs are evaluated immediately before a page API
+sends its request, and the longest matching delay is applied.
+
+This is not network throttling. It cannot delay navigations, declarative resource
+loads, service-worker traffic, browser traffic, or requests that bypass the
+page's wrapped APIs. Disabling a rule prevents new delays but does not cancel a
+request whose timer has already started.
+
 ## Rule data model
 
 Location: `types/rules.ts`

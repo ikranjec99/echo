@@ -1,5 +1,6 @@
 import type { RuleDraft } from '../types/rules';
 import { validatePageMatchPattern } from './css-injection';
+import { MAX_DELAY_MS, validateRequestPattern } from './request-delay';
 
 export type RuleField =
   | 'name'
@@ -9,7 +10,9 @@ export type RuleField =
   | 'requestHeaders'
   | 'responseHeaders'
   | 'css'
-  | 'script';
+  | 'script'
+  | 'requestPattern'
+  | 'delayMs';
 
 export type RuleValidationErrors = Partial<Record<RuleField, string>>;
 
@@ -66,7 +69,8 @@ export function validateRuleDraft(
 
   const urlPatternError =
     rule.action.type === 'injectCss' ||
-    rule.action.type === 'injectJavaScript'
+    rule.action.type === 'injectJavaScript' ||
+    rule.action.type === 'delayRequest'
       ? validatePageMatchPattern(rule.urlPattern)
       : validateUrlPattern(rule.urlPattern);
   if (urlPatternError) {
@@ -155,6 +159,23 @@ export function validateRuleDraft(
       errors.script = 'Enter JavaScript to inject.';
     } else if (new Blob([rule.action.script]).size > 50_000) {
       errors.script = 'JavaScript rules are limited to 50 KB.';
+    }
+  }
+
+  if (rule.action.type === 'delayRequest') {
+    const requestPatternError = validateRequestPattern(
+      rule.action.requestPattern,
+    );
+    if (requestPatternError) {
+      errors.requestPattern = requestPatternError;
+    }
+
+    if (
+      !Number.isInteger(rule.action.delayMs) ||
+      rule.action.delayMs < 1 ||
+      rule.action.delayMs > MAX_DELAY_MS
+    ) {
+      errors.delayMs = `Enter a delay from 1 to ${MAX_DELAY_MS} milliseconds.`;
     }
   }
 
