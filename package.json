@@ -1,0 +1,51 @@
+{
+  "name": "echo",
+  "version": "0.1.0",
+  "description": "A local, open-source browser extension for intercepting HTTP requests.",
+  "private": true,
+  "license": "MIT",
+  "homepage": "https://github.com/ikranjec99/echo#readme",
+  "bugs": {
+    "url": "https://github.com/ikranjec99/echo/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ikranjec99/echo.git"
+  },
+  "keywords": [
+    "browser-extension",
+    "developer-tools",
+    "http",
+    "interceptor",
+    "manifest-v3",
+    "request-blocking",
+    "request-redirect"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=22",
+    "npm": ">=11"
+  },
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "postinstall": "wxt prepare",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@wxt-dev/module-react": "^1.2.2",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10",
+    "wxt": "^0.21.4"
+  },
+  "packageManager": "npm@11.6.0"
+}

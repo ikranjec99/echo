@@ -1,0 +1,99 @@
+import { describe, expect, it } from 'vitest';
+import {
+  compileRules,
+  REQUEST_RESOURCE_TYPES,
+} from '../lib/rule-compiler';
+import type { InterceptorRule } from '../types/rules';
+
+function createRule(
+  overrides: Partial<InterceptorRule> = {},
+): InterceptorRule {
+  return {
+    id: 'rule-1',
+    name: 'Block analytics',
+    enabled: true,
+    urlPattern: '||analytics.example.com^',
+    action: { type: 'block' },
+    createdAt: '2026-08-16T00:00:00.000Z',
+    updatedAt: '2026-08-16T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+describe('compileRules', () => {
+  it('compiles a block rule', () => {
+    expect(compileRules([createRule()])).toEqual([
+      {
+        id: 1,
+        priority: 1,
+        action: { type: 'block' },
+        condition: {
+          urlFilter: '||analytics.example.com^',
+          resourceTypes: REQUEST_RESOURCE_TYPES,
+        },
+      },
+    ]);
+  });
+
+  it('compiles a redirect rule', () => {
+    const rule = createRule({
+      action: {
+        type: 'redirect',
+        targetUrl: 'http://localhost:3000',
+      },
+    });
+
+    expect(compileRules([rule])).toEqual([
+      {
+        id: 1,
+        priority: 1,
+        action: {
+          type: 'redirect',
+          redirect: { url: 'http://localhost:3000' },
+        },
+        condition: {
+          urlFilter: '||analytics.example.com^',
+          resourceTypes: REQUEST_RESOURCE_TYPES,
+        },
+      },
+    ]);
+  });
+
+  it('does not compile disabled rules', () => {
+    expect(compileRules([createRule({ enabled: false })])).toEqual([]);
+  });
+
+  it('assigns deterministic browser ids from source positions', () => {
+    const rules = [
+      createRule({ id: 'disabled', enabled: false }),
+      createRule({ id: 'enabled', urlPattern: '||example.com^' }),
+    ];
+
+    expect(compileRules(rules)).toEqual([
+      {
+        id: 2,
+        priority: 1,
+        action: { type: 'block' },
+        condition: {
+          urlFilter: '||example.com^',
+          resourceTypes: REQUEST_RESOURCE_TYPES,
+        },
+      },
+    ]);
+  });
+
+  it('targets page, API, and subresource requests explicitly', () => {
+    const [compiledRule] = compileRules([createRule()]);
+
+    expect(compiledRule?.condition.resourceTypes).toEqual(
+      expect.arrayContaining([
+        'main_frame',
+        'sub_frame',
+        'script',
+        'image',
+        'xmlhttprequest',
+        'websocket',
+      ]),
+    );
+  });
+});

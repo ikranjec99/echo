@@ -1,0 +1,50 @@
+name: Feature request
+description: Suggest an improvement or new capability for Echo.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Explain the developer problem first. Features involving new permissions,
+        remote services, traffic inspection, or code injection need an explicit
+        privacy and security discussion.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What workflow or limitation should Echo address?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior and user experience you would prefer.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Are there browser-native or lower-permission alternatives?
+
+  - type: textarea
+    id: safety
+    attributes:
+      label: Permissions and privacy impact
+      description: Note any new site access, stored data, injected code, or external services.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and the roadmap.
+          required: true
+        - label: This request does not contain credentials or private browsing data.
+          required: true

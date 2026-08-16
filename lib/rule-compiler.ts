@@ -1,0 +1,55 @@
+import type { Browser } from 'wxt/browser';
+import type { InterceptorRule } from '../types/rules';
+
+type BrowserRule = Browser.declarativeNetRequest.Rule;
+
+export const REQUEST_RESOURCE_TYPES: NonNullable<
+  BrowserRule['condition']['resourceTypes']
+> = [
+  'main_frame',
+  'sub_frame',
+  'stylesheet',
+  'script',
+  'image',
+  'font',
+  'object',
+  'xmlhttprequest',
+  'ping',
+  'csp_report',
+  'media',
+  'websocket',
+  'other',
+];
+
+function compileAction(
+  action: InterceptorRule['action'],
+): BrowserRule['action'] {
+  if (action.type === 'block') {
+    return { type: 'block' };
+  }
+
+  return {
+    type: 'redirect',
+    redirect: { url: action.targetUrl },
+  };
+}
+
+export function compileRules(rules: InterceptorRule[]): BrowserRule[] {
+  return rules.flatMap((rule, index) => {
+    if (!rule.enabled) {
+      return [];
+    }
+
+    return [
+      {
+        id: index + 1,
+        priority: 1,
+        action: compileAction(rule.action),
+        condition: {
+          urlFilter: rule.urlPattern,
+          resourceTypes: REQUEST_RESOURCE_TYPES,
+        },
+      },
+    ];
+  });
+}
