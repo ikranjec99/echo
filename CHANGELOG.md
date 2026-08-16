@@ -14,6 +14,7 @@ when formal releases begin.
 - Local block and fixed-destination redirect rules
 - Query-parameter add, replace, and remove rules
 - Request-header set and remove rules with sensitive-value safeguards
+- Response-header set and remove rules with Set-Cookie safeguards
 - Action-focused rule editor with branded interceptor type cards
 - Chrome URL-filter pattern validation
 - Persistent rules with `browser.storage.local`
@@ -29,6 +30,7 @@ when formal releases begin.
 - Verification-only GitHub Actions workflow
 - MIT license and open-source contributor templates
 - Brand, roadmap, architecture, rule-syntax, security, and contribution docs
+- Browser support matrix and Brave response-header debugging guidance
 
 ### Fixed
 

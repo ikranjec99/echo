@@ -5,7 +5,8 @@ export type RuleField =
   | 'urlPattern'
   | 'targetUrl'
   | 'queryParams'
-  | 'requestHeaders';
+  | 'requestHeaders'
+  | 'responseHeaders';
 
 export type RuleValidationErrors = Partial<Record<RuleField, string>>;
 
@@ -111,6 +112,30 @@ export function validateRuleDraft(
     ) {
       errors.requestHeaders =
         'Echo does not store authorization, cookie, or proxy credentials.';
+    }
+  }
+
+  if (rule.action.type === 'modifyResponseHeaders') {
+    const operations = rule.action.responseHeaders;
+    const normalizedNames = operations.map(({ header }) =>
+      header.trim().toLowerCase(),
+    );
+
+    if (operations.length === 0) {
+      errors.responseHeaders = 'Set or remove at least one response header.';
+    } else if (
+      normalizedNames.some((header) => !HEADER_NAME_PATTERN.test(header))
+    ) {
+      errors.responseHeaders = 'Enter valid HTTP header names.';
+    } else if (new Set(normalizedNames).size !== normalizedNames.length) {
+      errors.responseHeaders = 'Each response header can appear only once.';
+    } else if (
+      operations.some(
+        ({ header, operation }) =>
+          operation === 'set' && header.trim().toLowerCase() === 'set-cookie',
+      )
+    ) {
+      errors.responseHeaders = 'Echo does not store Set-Cookie values.';
     }
   }
 

@@ -93,8 +93,8 @@ The compiler is a pure function that:
 1. Receives all stored Echo rules.
 2. Excludes disabled rules.
 3. Assigns deterministic positive numeric browser rule IDs.
-4. Converts block, redirect, query-parameter, and request-header actions to
-   Manifest V3 DNR actions.
+4. Converts block, redirect, query-parameter, and request/response-header
+   actions to Manifest V3 DNR actions.
 5. Adds explicit request resource types for Chrome, Brave, and Firefox
    compatibility.
 
@@ -233,6 +233,9 @@ model but still require release testing.
 
 WXT provides a Firefox build path. Firefox support is planned but is not yet a
 tested or promised release target. Safari is outside the current MVP scope.
+
+See [`docs/browser-compatibility.md`](./browser-compatibility.md) for the support
+matrix and the known Brave DevTools response-header visibility caveat.
 
 ## Future boundaries
 

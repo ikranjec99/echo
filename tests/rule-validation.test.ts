@@ -143,4 +143,35 @@ describe('validateRuleDraft', () => {
         'Echo does not store authorization, cookie, or proxy credentials.',
     });
   });
+
+  it('accepts response-header set and remove operations', () => {
+    expect(
+      validateRuleDraft({
+        ...validBlockRule,
+        action: {
+          type: 'modifyResponseHeaders',
+          responseHeaders: [
+            { operation: 'set', header: 'cache-control', value: 'no-store' },
+            { operation: 'remove', header: 'server' },
+          ],
+        },
+      }),
+    ).toEqual({});
+  });
+
+  it('does not allow Set-Cookie values to be stored', () => {
+    expect(
+      validateRuleDraft({
+        ...validBlockRule,
+        action: {
+          type: 'modifyResponseHeaders',
+          responseHeaders: [
+            { operation: 'set', header: 'Set-Cookie', value: 'secret=true' },
+          ],
+        },
+      }),
+    ).toEqual({
+      responseHeaders: 'Echo does not store Set-Cookie values.',
+    });
+  });
 });

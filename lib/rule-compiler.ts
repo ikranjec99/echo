@@ -49,6 +49,13 @@ function compileAction(
     };
   }
 
+  if (action.type === 'modifyResponseHeaders') {
+    return {
+      type: 'modifyHeaders',
+      responseHeaders: action.responseHeaders,
+    };
+  }
+
   return {
     type: 'redirect',
     redirect: { url: action.targetUrl },
