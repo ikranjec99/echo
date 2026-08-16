@@ -12,6 +12,7 @@ import {
   prepareRulesForImport,
   serializeRuleBackup,
 } from '../../lib/rule-backup';
+import { duplicateRule } from '../../lib/rule-duplication';
 import { validateRuleDraft } from '../../lib/rule-validation';
 import {
   formatAddOrReplaceParams,
@@ -265,6 +266,18 @@ export default function App() {
 
     if (confirmed) {
       await removeRule(rule.id);
+    }
+  }
+
+  async function handleDuplicate(rule: InterceptorRule) {
+    const copiedRule = duplicateRule(rule);
+
+    await saveRule(copiedRule);
+
+    if (rulesStore.getState().status !== 'error') {
+      editRule(copiedRule.id);
+      setSelectedActionType(copiedRule.action.type);
+      dialogRef.current?.showModal();
     }
   }
 
@@ -798,6 +811,26 @@ export default function App() {
                       >
                         <path d="M12 20h9" />
                         <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                      </svg>
+                    </button>
+                    <button
+                      className="rule-action-button duplicate-button"
+                      type="button"
+                      aria-label={`Duplicate ${rule.name}`}
+                      title="Duplicate rule"
+                      onClick={() => void handleDuplicate(rule)}
+                    >
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect x="8" y="8" width="11" height="11" rx="2" />
+                        <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" />
                       </svg>
                     </button>
                     <button
