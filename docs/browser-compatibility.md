@@ -25,6 +25,12 @@ provides the Manifest V3 `userScripts` API. Chrome 138+ requires users to enable
 Firefox exposes the API through an optional permission flow that Echo does not
 yet implement.
 
+Experimental delay and mock JSON rules have a separate page-level boundary.
+They wrap page `fetch` and `XMLHttpRequest` in the main world and do not cover
+navigation, declarative resources, service-worker traffic, or requests made
+through other APIs. Main-world behavior may vary across browsers and currently
+targets Chromium.
+
 ## Response-header visibility in Brave DevTools
 
 Brave can apply a response-header rule without showing the modified header in

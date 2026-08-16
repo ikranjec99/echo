@@ -1,6 +1,7 @@
 import type { RuleDraft } from '../types/rules';
 import { validatePageMatchPattern } from './css-injection';
 import { MAX_DELAY_MS, validateRequestPattern } from './request-delay';
+import { validateMockResponseBody } from './response-mock';
 
 export type RuleField =
   | 'name'
@@ -12,7 +13,9 @@ export type RuleField =
   | 'css'
   | 'script'
   | 'requestPattern'
-  | 'delayMs';
+  | 'delayMs'
+  | 'statusCode'
+  | 'responseBody';
 
 export type RuleValidationErrors = Partial<Record<RuleField, string>>;
 
@@ -70,7 +73,8 @@ export function validateRuleDraft(
   const urlPatternError =
     rule.action.type === 'injectCss' ||
     rule.action.type === 'injectJavaScript' ||
-    rule.action.type === 'delayRequest'
+    rule.action.type === 'delayRequest' ||
+    rule.action.type === 'mockJsonResponse'
       ? validatePageMatchPattern(rule.urlPattern)
       : validateUrlPattern(rule.urlPattern);
   if (urlPatternError) {
@@ -176,6 +180,32 @@ export function validateRuleDraft(
       rule.action.delayMs > MAX_DELAY_MS
     ) {
       errors.delayMs = `Enter a delay from 1 to ${MAX_DELAY_MS} milliseconds.`;
+    }
+  }
+
+  if (rule.action.type === 'mockJsonResponse') {
+    const requestPatternError = validateRequestPattern(
+      rule.action.requestPattern,
+    );
+    if (requestPatternError) {
+      errors.requestPattern = requestPatternError;
+    }
+
+    if (
+      !Number.isInteger(rule.action.statusCode) ||
+      rule.action.statusCode < 200 ||
+      rule.action.statusCode > 599 ||
+      [204, 205, 304].includes(rule.action.statusCode)
+    ) {
+      errors.statusCode =
+        'Enter a body-compatible HTTP status from 200 to 599.';
+    }
+
+    const responseBodyError = validateMockResponseBody(
+      rule.action.responseBody,
+    );
+    if (responseBodyError) {
+      errors.responseBody = responseBodyError;
     }
   }
 

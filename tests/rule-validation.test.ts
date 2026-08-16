@@ -211,4 +211,23 @@ describe('validateRuleDraft', () => {
       delayMs: 'Enter a delay from 1 to 30000 milliseconds.',
     });
   });
+
+  it('validates experimental mock JSON response rules', () => {
+    expect(
+      validateRuleDraft({
+        ...validBlockRule,
+        urlPattern: '*://*.example.com/*',
+        action: {
+          type: 'mockJsonResponse',
+          requestPattern: '',
+          statusCode: 700,
+          responseBody: '{',
+        },
+      }),
+    ).toEqual({
+      requestPattern: 'Enter a request URL pattern.',
+      statusCode: 'Enter a body-compatible HTTP status from 200 to 599.',
+      responseBody: 'Enter valid JSON.',
+    });
+  });
 });

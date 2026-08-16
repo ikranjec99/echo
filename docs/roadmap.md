@@ -99,12 +99,22 @@ Possible experiments:
 Do not advertise this as general network throttling. Reliable delay simulation
 belongs in the future proxy companion described below.
 
+### Mock JSON response simulation
+
+Status: a limited page-level Fetch and XMLHttpRequest experiment is implemented
+in the current development build.
+
+Enabled rules can return user-authored JSON and a configured status code for
+matching page API calls without sending the request. This does not intercept
+navigation, resources, service workers, or general browser traffic.
+
 ## Features requiring a local proxy companion
 
 ### Response-body modification
 
 `declarativeNetRequest` cannot read or rewrite arbitrary response bodies. Full
-response modification requires a local HTTP(S) proxy controlled by the user.
+network-level response modification still requires a local HTTP(S) proxy
+controlled by the user.
 
 A future proxy architecture would need:
 

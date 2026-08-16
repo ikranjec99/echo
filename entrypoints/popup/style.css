@@ -657,6 +657,11 @@ textarea:focus-visible {
   background: rgb(243 156 18 / 12%);
 }
 
+.rule-type-mockJsonResponse {
+  color: var(--color-accent-strong);
+  background: rgb(46 204 113 / 12%);
+}
+
 .rule-card code,
 .redirect-target {
   display: block;
@@ -868,7 +873,8 @@ textarea:focus-visible {
 .action-card-modifyResponseHeaders .action-icon,
 .action-card-injectCss .action-icon,
 .action-card-injectJavaScript .action-icon,
-.action-card-delayRequest .action-icon {
+.action-card-delayRequest .action-icon,
+.action-card-mockJsonResponse .action-icon {
   background: var(--color-brand-accent);
 }
 
@@ -879,7 +885,9 @@ textarea:focus-visible {
 }
 
 .action-card-delayRequest .action-icon,
-.selected-action-delayRequest .selected-action-icon {
+.selected-action-delayRequest .selected-action-icon,
+.action-card-mockJsonResponse .action-icon,
+.selected-action-mockJsonResponse .selected-action-icon {
   font-size: 0.6875rem;
   letter-spacing: 0.04em;
 }

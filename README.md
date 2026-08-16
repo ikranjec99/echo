@@ -22,6 +22,8 @@ Echo is an early development preview. The current build supports:
 - Injecting local CSS into explicitly matched pages
 - Running local JavaScript in isolated user-script worlds
 - Experimentally delaying page-originated Fetch and XMLHttpRequest calls
+- Experimentally returning user-defined JSON from matching page Fetch and
+  XMLHttpRequest calls
 - Chrome URL-filter patterns
 - Enabling and disabling individual rules
 - Pausing and resuming all interception without changing individual rules
@@ -46,8 +48,9 @@ are documented in the [browser compatibility guide](./docs/browser-compatibility
 Echo has no backend, user accounts, analytics, or cloud synchronization. Rules
 are stored in the browser profile with `browser.storage.local`.
 
-Echo does not inspect or upload request bodies, response bodies, cookies,
-authorization headers, or browsing history.
+Echo does not inspect or upload network request bodies, server response bodies,
+cookies, authorization headers, or browsing history. Mock JSON bodies are
+created by the user and stored locally as rule configuration.
 
 ## Permissions
 
@@ -99,7 +102,7 @@ Open Echo from the browser toolbar, select **Add rule**, and provide:
 
 - A descriptive rule name
 - A Chrome URL-filter pattern
-- A block, redirect, query-parameter, request-header, or response-header action
+- A block, redirect, query-parameter, header, injection, delay, or mock JSON action
 - An absolute HTTP or HTTPS destination for redirects
 
 Example block pattern:

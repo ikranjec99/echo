@@ -19,6 +19,8 @@ when formal releases begin.
 - Isolated local JavaScript injection using the browser userScripts API
 - Capability detection, source limits, warnings, and user-script threat model
 - Experimental page-level Fetch and XMLHttpRequest delay rules
+- Experimental user-defined JSON responses for matching page Fetch and
+  XMLHttpRequest calls
 - Explicit Experimental labeling and aligned timing icon for delay rules
 - Fixed status header with independently scrollable rule content
 - Action-focused rule editor with branded interceptor type cards

@@ -6,6 +6,10 @@ import {
   DELAY_READY_EVENT,
   getDelayRulesForPage,
 } from '../lib/request-delay';
+import {
+  getMockRulesForPage,
+  MOCK_CONFIG_EVENT,
+} from '../lib/response-mock';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -39,6 +43,18 @@ export default defineContentScript({
         new CustomEvent(DELAY_CONFIG_EVENT, {
           detail: JSON.stringify(
             getDelayRulesForPage(
+              rules,
+              interceptionEnabled,
+              window.location.href,
+            ),
+          ),
+        }),
+      );
+
+      window.dispatchEvent(
+        new CustomEvent(MOCK_CONFIG_EVENT, {
+          detail: JSON.stringify(
+            getMockRulesForPage(
               rules,
               interceptionEnabled,
               window.location.href,

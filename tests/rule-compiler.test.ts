@@ -97,6 +97,21 @@ describe('compileRules', () => {
     ).toEqual([]);
   });
 
+  it('leaves mock JSON rules to the page bridge', () => {
+    expect(
+      compileRules([
+        createRule({
+          action: {
+            type: 'mockJsonResponse',
+            requestPattern: '*://api.example.com/*',
+            statusCode: 200,
+            responseBody: '{"ok":true}',
+          },
+        }),
+      ]),
+    ).toEqual([]);
+  });
+
   it('compiles query-parameter transformations', () => {
     const rule = createRule({
       action: {
