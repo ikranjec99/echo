@@ -73,6 +73,16 @@ describe('compileRules', () => {
     ).toEqual([]);
   });
 
+  it('leaves JavaScript injection rules to the user-script engine', () => {
+    expect(
+      compileRules([
+        createRule({
+          action: { type: 'injectJavaScript', script: 'console.log("Echo")' },
+        }),
+      ]),
+    ).toEqual([]);
+  });
+
   it('compiles query-parameter transformations', () => {
     const rule = createRule({
       action: {

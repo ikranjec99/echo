@@ -16,6 +16,8 @@ when formal releases begin.
 - Request-header set and remove rules with sensitive-value safeguards
 - Response-header set and remove rules with Set-Cookie safeguards
 - Local CSS injection rules with page match patterns and global pause support
+- Isolated local JavaScript injection using the browser userScripts API
+- Capability detection, source limits, warnings, and user-script threat model
 - Action-focused rule editor with branded interceptor type cards
 - Chrome URL-filter pattern validation
 - Persistent rules with `browser.storage.local`

@@ -5,7 +5,11 @@ export default defineConfig({
   manifest: {
     name: 'Echo',
     description: 'A local, open-source HTTP request interceptor.',
-    permissions: ['declarativeNetRequestWithHostAccess', 'storage'],
+    permissions: [
+      'declarativeNetRequestWithHostAccess',
+      'storage',
+      'userScripts',
+    ],
     host_permissions: ['<all_urls>'],
     icons: {
       16: 'icon/icon-16.png',

@@ -17,6 +17,10 @@ export type RuleAction =
   | {
       type: 'injectCss';
       css: string;
+    }
+  | {
+      type: 'injectJavaScript';
+      script: string;
     };
 
 export type QueryParameter = {

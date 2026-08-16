@@ -19,6 +19,12 @@ Do not interpret API availability as a release guarantee. Each browser target
 must pass Echo's automated suite and manual interception tests before it is
 listed as officially supported.
 
+JavaScript injection has an additional compatibility boundary. Chrome 120+
+provides the Manifest V3 `userScripts` API. Chrome 138+ requires users to enable
+**Allow User Scripts** per extension; earlier Chrome versions use Developer mode.
+Firefox exposes the API through an optional permission flow that Echo does not
+yet implement.
+
 ## Response-header visibility in Brave DevTools
 
 Brave can apply a response-header rule without showing the modified header in

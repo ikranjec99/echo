@@ -63,12 +63,16 @@ function compileAction(
     };
   }
 
-  throw new Error('CSS injection actions cannot be compiled as DNR rules.');
+  throw new Error('Page injection actions cannot be compiled as DNR rules.');
 }
 
 export function compileRules(rules: InterceptorRule[]): BrowserRule[] {
   return rules.flatMap((rule, index) => {
-    if (!rule.enabled || rule.action.type === 'injectCss') {
+    if (
+      !rule.enabled ||
+      rule.action.type === 'injectCss' ||
+      rule.action.type === 'injectJavaScript'
+    ) {
       return [];
     }
 

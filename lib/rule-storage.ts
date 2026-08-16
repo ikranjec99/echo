@@ -87,7 +87,13 @@ function isRuleAction(value: unknown): value is RuleAction {
     return true;
   }
 
-  return action.type === 'injectCss' && typeof action.css === 'string';
+  if (action.type === 'injectCss') {
+    return typeof action.css === 'string';
+  }
+
+  return (
+    action.type === 'injectJavaScript' && typeof action.script === 'string'
+  );
 }
 
 function isInterceptorRule(value: unknown): value is InterceptorRule {
