@@ -71,7 +71,8 @@ export function compileRules(rules: InterceptorRule[]): BrowserRule[] {
     if (
       !rule.enabled ||
       rule.action.type === 'injectCss' ||
-      rule.action.type === 'injectJavaScript'
+      rule.action.type === 'injectJavaScript' ||
+      rule.action.type === 'delayRequest'
     ) {
       return [];
     }

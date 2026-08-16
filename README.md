@@ -21,6 +21,7 @@ Echo is an early development preview. The current build supports:
 - Setting and removing supported HTTP response headers
 - Injecting local CSS into explicitly matched pages
 - Running local JavaScript in isolated user-script worlds
+- Experimentally delaying page-originated Fetch and XMLHttpRequest calls
 - Chrome URL-filter patterns
 - Enabling and disabling individual rules
 - Pausing and resuming all interception without changing individual rules

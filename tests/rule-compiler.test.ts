@@ -83,6 +83,20 @@ describe('compileRules', () => {
     ).toEqual([]);
   });
 
+  it('leaves page delay rules to the page bridge', () => {
+    expect(
+      compileRules([
+        createRule({
+          action: {
+            type: 'delayRequest',
+            requestPattern: '*://api.example.com/*',
+            delayMs: 1000,
+          },
+        }),
+      ]),
+    ).toEqual([]);
+  });
+
   it('compiles query-parameter transformations', () => {
     const rule = createRule({
       action: {

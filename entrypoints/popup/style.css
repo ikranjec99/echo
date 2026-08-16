@@ -25,6 +25,7 @@
 
 body {
   min-width: 400px;
+  max-height: 600px;
   margin: 0;
   background:
     radial-gradient(circle at 100% 0%, rgb(52 152 219 / 12%), transparent 38%),
@@ -39,8 +40,35 @@ textarea {
 }
 
 .popup {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  height: 600px;
   min-height: 300px;
-  padding: 24px;
+  max-height: 600px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.popup-fixed {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  padding: 24px 24px 0;
+  border-bottom: 1px solid var(--color-border);
+  background:
+    radial-gradient(circle at 100% 0%, rgb(52 152 219 / 12%), transparent 48%),
+    var(--color-canvas);
+  box-shadow: 0 5px 14px rgb(23 32 42 / 5%);
+}
+
+.rules-scroll {
+  width: 100%;
+  min-height: 0;
+  padding: 18px 24px 24px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .app-header,
@@ -217,7 +245,7 @@ textarea:focus-visible {
   padding: 14px;
   border: 1px solid rgb(46 204 113 / 28%);
   border-radius: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   background: rgb(46 204 113 / 8%);
 }
 
@@ -275,13 +303,18 @@ textarea:focus-visible {
 
 .rule-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
+  width: 100%;
+  min-width: 0;
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
 .rule-card {
+  width: 100%;
+  min-width: 0;
   gap: 16px;
   padding: 14px;
   border: 1px solid var(--color-border);
@@ -329,6 +362,7 @@ textarea:focus-visible {
 }
 
 .rule-title-row {
+  min-width: 0;
   justify-content: flex-start;
   gap: 8px;
   margin-bottom: 6px;
@@ -343,12 +377,16 @@ textarea:focus-visible {
 }
 
 .rule-type {
+  overflow: hidden;
+  max-width: 108px;
   padding: 2px 6px;
   border-radius: 999px;
   font-size: 0.625rem;
   font-weight: 800;
   letter-spacing: 0.04em;
+  text-overflow: ellipsis;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .rule-type-block {
@@ -384,6 +422,11 @@ textarea:focus-visible {
 .rule-type-injectJavaScript {
   color: var(--color-primary-strong);
   background: rgb(52 152 219 / 12%);
+}
+
+.rule-type-delayRequest {
+  color: #b9770e;
+  background: rgb(243 156 18 / 12%);
 }
 
 .rule-card code,
@@ -549,6 +592,26 @@ textarea:focus-visible {
   font-size: 0.8125rem;
 }
 
+.action-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  gap: 6px;
+}
+
+.experimental-badge {
+  padding: 3px 6px;
+  border-radius: 999px;
+  color: #9a6208;
+  background: rgb(243 156 18 / 14%);
+  font-size: 0.5rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
 .action-card > span:last-child {
   color: var(--color-muted);
   font-size: 0.6875rem;
@@ -572,8 +635,21 @@ textarea:focus-visible {
 .action-card-modifyRequestHeaders .action-icon,
 .action-card-modifyResponseHeaders .action-icon,
 .action-card-injectCss .action-icon,
-.action-card-injectJavaScript .action-icon {
+.action-card-injectJavaScript .action-icon,
+.action-card-delayRequest .action-icon {
   background: var(--color-brand-accent);
+}
+
+.action-card-injectJavaScript .action-icon,
+.selected-action-injectJavaScript .selected-action-icon {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.action-card-delayRequest .action-icon,
+.selected-action-delayRequest .selected-action-icon {
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
 }
 
 .selected-action {
@@ -650,7 +726,8 @@ textarea:focus-visible {
 }
 
 .security-warning,
-.capability-warning {
+.capability-warning,
+.experimental-warning {
   display: grid;
   gap: 5px;
   padding: 11px 12px;
@@ -670,6 +747,12 @@ textarea:focus-visible {
   border: 1px solid rgb(192 57 43 / 30%);
   color: #922b21;
   background: rgb(192 57 43 / 8%);
+}
+
+.experimental-warning {
+  border: 1px solid rgb(52 152 219 / 28%);
+  color: var(--color-primary-strong);
+  background: rgb(52 152 219 / 8%);
 }
 
 .primary-button:disabled {

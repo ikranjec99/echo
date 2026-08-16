@@ -1,6 +1,11 @@
 import { createInterceptionStorage } from '../lib/interception-storage';
 import { getCssInjections } from '../lib/css-injection';
 import { createRuleStorage } from '../lib/rule-storage';
+import {
+  DELAY_CONFIG_EVENT,
+  DELAY_READY_EVENT,
+  getDelayRulesForPage,
+} from '../lib/request-delay';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -29,6 +34,18 @@ export default defineContentScript({
         style.textContent = injection.css;
         (document.head ?? document.documentElement).append(style);
       }
+
+      window.dispatchEvent(
+        new CustomEvent(DELAY_CONFIG_EVENT, {
+          detail: JSON.stringify(
+            getDelayRulesForPage(
+              rules,
+              interceptionEnabled,
+              window.location.href,
+            ),
+          ),
+        }),
+      );
     }
 
     browser.storage.onChanged.addListener((changes, areaName) => {
@@ -38,6 +55,10 @@ export default defineContentScript({
       ) {
         void applyCssRules();
       }
+    });
+
+    window.addEventListener(DELAY_READY_EVENT, () => {
+      void applyCssRules();
     });
 
     void applyCssRules();

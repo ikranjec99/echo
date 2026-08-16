@@ -194,4 +194,21 @@ describe('validateRuleDraft', () => {
       }),
     ).toEqual({ script: 'Enter JavaScript to inject.' });
   });
+
+  it('validates experimental request-delay rules', () => {
+    expect(
+      validateRuleDraft({
+        ...validBlockRule,
+        urlPattern: '*://*.example.com/*',
+        action: {
+          type: 'delayRequest',
+          requestPattern: '',
+          delayMs: 30_001,
+        },
+      }),
+    ).toEqual({
+      requestPattern: 'Enter a request URL pattern.',
+      delayMs: 'Enter a delay from 1 to 30000 milliseconds.',
+    });
+  });
 });

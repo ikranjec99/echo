@@ -18,6 +18,9 @@ when formal releases begin.
 - Local CSS injection rules with page match patterns and global pause support
 - Isolated local JavaScript injection using the browser userScripts API
 - Capability detection, source limits, warnings, and user-script threat model
+- Experimental page-level Fetch and XMLHttpRequest delay rules
+- Explicit Experimental labeling and aligned timing icon for delay rules
+- Fixed status header with independently scrollable rule content
 - Action-focused rule editor with branded interceptor type cards
 - Chrome URL-filter pattern validation
 - Persistent rules with `browser.storage.local`
@@ -37,6 +40,10 @@ when formal releases begin.
 
 ### Fixed
 
+- Prevented long action labels from widening and clipping the scrollable rule
+  list.
+- Prevented the popup from collapsing to its initial viewport height instead of
+  giving the rule list the available browser popup space.
 - Added explicit request resource types so Brave applies dynamic block and
   redirect rules reliably.
 - Prevented browser API access as an import-time side effect, allowing storage
