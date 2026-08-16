@@ -12,11 +12,13 @@ when formal releases begin.
 
 - React and TypeScript browser-extension foundation powered by WXT
 - Local block and fixed-destination redirect rules
+- Query-parameter add, replace, and remove rules
 - Chrome URL-filter pattern validation
 - Persistent rules with `browser.storage.local`
 - Zustand-backed loading, saving, toggling, editing, and deletion
 - Manifest V3 dynamic-rule compilation and background synchronization
 - Explicit enabled and disabled status labels
+- Persistent global pause and resume control
 - Confirmed rule deletion
 - Branded light and dark popup themes
 - Echo icon assets for extension and toolbar sizes

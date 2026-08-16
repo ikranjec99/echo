@@ -88,4 +88,15 @@ describe('synchronizeDynamicRules', () => {
       addRules: [],
     });
   });
+
+  it('removes installed rules without compiling saved rules while paused', async () => {
+    const api = createDynamicRulesApi([1]);
+
+    await synchronizeDynamicRules(createRuleSource([createRule()]), api, false);
+
+    expect(api.updateDynamicRules).toHaveBeenCalledWith({
+      removeRuleIds: [1],
+      addRules: [],
+    });
+  });
 });

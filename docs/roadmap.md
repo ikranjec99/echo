@@ -29,6 +29,8 @@ Limitations:
 
 ### Query parameters
 
+Status: implemented in the current development build.
+
 Add rules that transform request URLs by adding, replacing, or removing query
 parameters.
 
@@ -125,4 +127,3 @@ proxy has a dedicated threat model, security review, and cross-platform plan.
 6. Limited page-level delay experiment
 7. Local proxy research and threat model
 8. Proxy-based delay and response-body modification
-

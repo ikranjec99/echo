@@ -25,7 +25,23 @@ function isRuleAction(value: unknown): value is RuleAction {
     return true;
   }
 
-  return action.type === 'redirect' && typeof action.targetUrl === 'string';
+  if (action.type === 'redirect') {
+    return typeof action.targetUrl === 'string';
+  }
+
+  return (
+    action.type === 'modifyQuery' &&
+    Array.isArray(action.addOrReplaceParams) &&
+    action.addOrReplaceParams.every(
+      (param) =>
+        !!param &&
+        typeof param === 'object' &&
+        typeof (param as Record<string, unknown>).key === 'string' &&
+        typeof (param as Record<string, unknown>).value === 'string',
+    ) &&
+    Array.isArray(action.removeParams) &&
+    action.removeParams.every((key) => typeof key === 'string')
+  );
 }
 
 function isInterceptorRule(value: unknown): value is InterceptorRule {
