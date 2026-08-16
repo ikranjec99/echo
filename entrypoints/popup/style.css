@@ -23,9 +23,15 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  width: 400px;
+  height: 600px;
+  overflow: hidden;
+}
+
 body {
   min-width: 400px;
-  max-height: 600px;
   margin: 0;
   background:
     radial-gradient(circle at 100% 0%, rgb(52 152 219 / 12%), transparent 38%),
@@ -63,6 +69,7 @@ textarea {
 }
 
 .rules-scroll {
+  flex: 1 1 0;
   width: 100%;
   min-height: 0;
   padding: 18px 24px 24px;
@@ -335,29 +342,40 @@ textarea:focus-visible {
 
 .rule-actions {
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 
-.rule-actions button {
-  padding: 4px 6px;
+.rule-actions .rule-action-button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border: 0;
-  border-radius: 6px;
-  color: var(--color-primary-strong);
+  border-radius: 7px;
+  place-items: center;
+  color: var(--color-muted);
   background: transparent;
-  font-size: 0.6875rem;
-  font-weight: 700;
   cursor: pointer;
 }
 
-.rule-actions button:hover {
+.rule-actions .rule-action-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.rule-actions .edit-button:hover,
+.rule-actions .edit-button:focus-visible {
+  color: var(--color-primary-strong);
   background: rgb(52 152 219 / 10%);
 }
 
 .rule-actions .delete-button {
-  color: #c0392b;
+  color: var(--color-muted);
 }
 
-.rule-actions .delete-button:hover {
+.rule-actions .delete-button:hover,
+.rule-actions .delete-button:focus-visible {
+  color: #c0392b;
   background: rgb(192 57 43 / 10%);
 }
 
@@ -445,6 +463,7 @@ textarea:focus-visible {
 }
 
 .switch {
+  position: relative;
   display: grid;
   gap: 5px;
   justify-items: end;
@@ -466,8 +485,11 @@ textarea:focus-visible {
 
 .switch input {
   position: absolute;
+  top: 0;
+  right: 0;
   width: 1px;
   height: 1px;
+  margin: 0;
   opacity: 0;
 }
 
