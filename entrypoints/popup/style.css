@@ -565,7 +565,9 @@ textarea:focus-visible {
 }
 
 .rule-actions .edit-button:hover,
-.rule-actions .edit-button:focus-visible {
+.rule-actions .edit-button:focus-visible,
+.rule-actions .duplicate-button:hover,
+.rule-actions .duplicate-button:focus-visible {
   color: var(--color-primary-strong);
   background: rgb(52 152 219 / 10%);
 }
