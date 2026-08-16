@@ -48,6 +48,7 @@ const ACTION_LABELS: Record<RuleActionType, string> = {
   injectCss: 'CSS',
   injectJavaScript: 'JavaScript',
   delayRequest: 'Delay',
+  mockJsonResponse: 'Mock JSON',
 };
 
 function getRuleSearchText(rule: InterceptorRule): string {
@@ -83,6 +84,8 @@ function getRuleSearchText(rule: InterceptorRule): string {
         return rule.action.script;
       case 'delayRequest':
         return `${rule.action.requestPattern} ${rule.action.delayMs}`;
+      case 'mockJsonResponse':
+        return `${rule.action.requestPattern} ${rule.action.statusCode} ${rule.action.responseBody}`;
       case 'block':
         return '';
     }
@@ -145,6 +148,13 @@ const ACTION_OPTIONS: Array<{
     icon: 'MS',
     title: 'Delay request',
     description: 'Delay matching page fetch and XHR calls.',
+    experimental: true,
+  },
+  {
+    type: 'mockJsonResponse',
+    icon: '{}',
+    title: 'Mock JSON response',
+    description: 'Return local JSON for matching page fetch and XHR calls.',
     experimental: true,
   },
 ];
@@ -403,11 +413,25 @@ export default function App() {
                         ).trim(),
                         delayMs: Number(formData.get('delayMs')),
                       }
+                    : actionType === 'mockJsonResponse'
+                      ? {
+                          type: 'mockJsonResponse' as const,
+                          requestPattern: String(
+                            formData.get('requestPattern') ?? '',
+                          ).trim(),
+                          statusCode: Number(formData.get('statusCode')),
+                          responseBody: String(
+                            formData.get('responseBody') ?? '',
+                          ),
+                        }
                     : { type: 'block' as const };
     const draft: RuleDraft = {
       name: String(formData.get('name') ?? '').trim(),
       enabled: editingRule?.enabled ?? true,
-      urlPattern: String(formData.get('urlPattern') ?? '').trim(),
+      urlPattern:
+        actionType === 'delayRequest' || actionType === 'mockJsonResponse'
+          ? '<all_urls>'
+          : String(formData.get('urlPattern') ?? '').trim(),
       action,
     };
     const errors = validateRuleDraft(draft);
@@ -446,9 +470,15 @@ export default function App() {
     const delayMsInput = form.elements.namedItem(
       'delayMs',
     ) as HTMLInputElement;
+    const statusCodeInput = form.elements.namedItem(
+      'statusCode',
+    ) as HTMLInputElement;
+    const responseBodyInput = form.elements.namedItem(
+      'responseBody',
+    ) as HTMLTextAreaElement;
 
     nameInput.setCustomValidity(errors.name ?? '');
-    urlPatternInput.setCustomValidity(errors.urlPattern ?? '');
+    urlPatternInput?.setCustomValidity(errors.urlPattern ?? '');
     targetUrlInput?.setCustomValidity(errors.targetUrl ?? '');
     addOrReplaceParamsInput?.setCustomValidity(errors.queryParams ?? '');
     removeParamsInput?.setCustomValidity(errors.queryParams ?? '');
@@ -462,6 +492,8 @@ export default function App() {
     scriptInput?.setCustomValidity(errors.script ?? '');
     requestPatternInput?.setCustomValidity(errors.requestPattern ?? '');
     delayMsInput?.setCustomValidity(errors.delayMs ?? '');
+    statusCodeInput?.setCustomValidity(errors.statusCode ?? '');
+    responseBodyInput?.setCustomValidity(errors.responseBody ?? '');
 
     if (!form.reportValidity()) {
       return;
@@ -716,11 +748,15 @@ export default function App() {
                     <span className={`rule-type rule-type-${rule.action.type}`}>
                       {ACTION_LABELS[rule.action.type]}
                     </span>
-                    {rule.action.type === 'delayRequest' && (
+                    {(rule.action.type === 'delayRequest' ||
+                      rule.action.type === 'mockJsonResponse') && (
                       <span className="experimental-badge">Experimental</span>
                     )}
                   </div>
-                  <code>{rule.urlPattern}</code>
+                  {rule.action.type !== 'delayRequest' &&
+                    rule.action.type !== 'mockJsonResponse' && (
+                      <code>{rule.urlPattern}</code>
+                    )}
                   {rule.action.type === 'redirect' && (
                     <p className="redirect-target">→ {rule.action.targetUrl}</p>
                   )}
@@ -767,6 +803,12 @@ export default function App() {
                   {rule.action.type === 'delayRequest' && (
                     <p className="redirect-target">
                       {rule.action.delayMs} ms · {rule.action.requestPattern}
+                    </p>
+                  )}
+                  {rule.action.type === 'mockJsonResponse' && (
+                    <p className="redirect-target">
+                      HTTP {rule.action.statusCode} ·{' '}
+                      {rule.action.responseBody.length} JSON characters
                     </p>
                   )}
                 </div>
@@ -947,7 +989,8 @@ export default function App() {
                     )?.title}
                   </strong>
                 </span>
-                {selectedActionType === 'delayRequest' && (
+                {(selectedActionType === 'delayRequest' ||
+                  selectedActionType === 'mockJsonResponse') && (
                   <span className="experimental-badge">Experimental</span>
                 )}
                 <span className="change-action">Change</span>
@@ -965,36 +1008,38 @@ export default function App() {
                 />
               </label>
 
-              <label className="field">
-                <span>
-                  {selectedActionType === 'injectCss' ||
-                  selectedActionType === 'injectJavaScript' ||
-                  selectedActionType === 'delayRequest'
-                    ? 'Page match pattern'
-                    : 'URL pattern'}
-                </span>
-                <input
-                  name="urlPattern"
-                  placeholder={
-                    selectedActionType === 'injectCss' ||
-                    selectedActionType === 'injectJavaScript' ||
-                    selectedActionType === 'delayRequest'
-                      ? '*://*.example.com/*'
-                      : '||analytics.example.com^'
-                  }
-                  defaultValue={editingRule?.urlPattern}
-                  autoComplete="off"
-                  required
-                  onInput={(event) => event.currentTarget.setCustomValidity('')}
-                />
-                <small>
-                  {selectedActionType === 'injectCss' ||
-                  selectedActionType === 'injectJavaScript' ||
-                  selectedActionType === 'delayRequest'
-                    ? 'Uses browser extension match-pattern syntax.'
-                    : 'Uses Chrome URL filter syntax.'}
-                </small>
-              </label>
+              {selectedActionType !== 'delayRequest' &&
+                selectedActionType !== 'mockJsonResponse' && (
+                  <label className="field">
+                    <span>
+                      {selectedActionType === 'injectCss' ||
+                      selectedActionType === 'injectJavaScript'
+                        ? 'Page match pattern'
+                        : 'URL pattern'}
+                    </span>
+                    <input
+                      name="urlPattern"
+                      placeholder={
+                        selectedActionType === 'injectCss' ||
+                        selectedActionType === 'injectJavaScript'
+                          ? '*://*.example.com/*'
+                          : '||analytics.example.com^'
+                      }
+                      defaultValue={editingRule?.urlPattern}
+                      autoComplete="off"
+                      required
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                    <small>
+                      {selectedActionType === 'injectCss' ||
+                      selectedActionType === 'injectJavaScript'
+                        ? 'Uses browser extension match-pattern syntax.'
+                        : 'Uses Chrome URL filter syntax.'}
+                    </small>
+                  </label>
+                )}
 
               {selectedActionType === 'redirect' && (
                 <label className="field">
@@ -1256,6 +1301,75 @@ export default function App() {
                       }
                     />
                     <small>Maximum delay: 30,000 ms.</small>
+                  </label>
+                </div>
+              )}
+
+              {selectedActionType === 'mockJsonResponse' && (
+                <div className="action-fields">
+                  <div className="experimental-warning" role="note">
+                    <strong>Experimental page-level response mock</strong>
+                    <span>
+                      Replaces matching page fetch and XMLHttpRequest calls. It
+                      does not affect navigation, images, service workers, or
+                      other browser-level requests.
+                    </span>
+                  </div>
+
+                  <label className="field">
+                    <span>Request URL pattern</span>
+                    <input
+                      name="requestPattern"
+                      placeholder="*://api.example.com/users*"
+                      defaultValue={
+                        editingRule?.action.type === 'mockJsonResponse'
+                          ? editingRule.action.requestPattern
+                          : ''
+                      }
+                      autoComplete="off"
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                    <small>Uses * as a wildcard against the complete URL.</small>
+                  </label>
+
+                  <label className="field">
+                    <span>HTTP status code</span>
+                    <input
+                      name="statusCode"
+                      type="number"
+                      min="200"
+                      max="599"
+                      step="1"
+                      defaultValue={
+                        editingRule?.action.type === 'mockJsonResponse'
+                          ? editingRule.action.statusCode
+                          : 200
+                      }
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                  </label>
+
+                  <label className="field">
+                    <span>JSON response body</span>
+                    <textarea
+                      className="code-editor script-editor"
+                      name="responseBody"
+                      placeholder={'{\n  "users": [{ "id": 1, "name": "Echo" }]\n}'}
+                      defaultValue={
+                        editingRule?.action.type === 'mockJsonResponse'
+                          ? editingRule.action.responseBody
+                          : '{\n  "ok": true\n}'
+                      }
+                      spellCheck="false"
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                    <small>Valid JSON only. Maximum size: 100 KB.</small>
                   </label>
                 </div>
               )}

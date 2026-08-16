@@ -146,15 +146,28 @@ security boundary and explicit non-goals.
 Locations: `entrypoints/delay-main.content.ts`, `lib/request-delay.ts`
 
 A packaged main-world bridge wraps page calls to `fetch` and `XMLHttpRequest`.
-The isolated content script sends only active delay configuration for the current
-page. A ready/config handshake prevents either execution world from missing the
-initial state. Request URL globs are evaluated immediately before a page API
+New delay rules apply on all pages and select calls through their request URL
+pattern. A ready/config handshake prevents either execution world from missing
+the initial state. Request URL globs are evaluated immediately before a page API
 sends its request, and the longest matching delay is applied.
 
 This is not network throttling. It cannot delay navigations, declarative resource
 loads, service-worker traffic, browser traffic, or requests that bypass the
 page's wrapped APIs. Disabling a rule prevents new delays but does not cancel a
 request whose timer has already started.
+
+### Experimental mock JSON responses
+
+Locations: `entrypoints/delay-main.content.ts`, `lib/response-mock.ts`
+
+The same packaged main-world bridge can short-circuit matching page `fetch` and
+`XMLHttpRequest` calls with a user-defined JSON body and status code. New mock
+rules apply on all pages and select calls through their request URL pattern.
+Matching calls do not reach the network.
+
+This is page-level API simulation, not general response-body interception. It
+does not affect navigation, declarative resource loads, service workers, other
+extensions, or traffic that bypasses the wrapped page APIs.
 
 ## Rule data model
 
@@ -232,8 +245,9 @@ Echo currently requests:
 - `<all_urls>`
 
 Broad host access is required because redirect rules can target arbitrary
-user-selected websites. The browser executes DNR rules without exposing request
-or response bodies to Echo.
+user-selected websites. The browser executes DNR rules without exposing network
+request or server response bodies to Echo. User-authored mock JSON is stored as
+local rule configuration.
 
 Security invariants:
 
@@ -284,8 +298,9 @@ matrix and the known Brave DevTools response-header visibility caveat.
 ## Future boundaries
 
 Manifest V3 can support header and query-parameter transformations, plus
-permissioned script/style injection. It cannot reliably delay arbitrary network
-traffic or rewrite response bodies. Those capabilities require limited page-level
-simulation or a future local proxy companion.
+permissioned script/style injection. Echo offers limited page-level Fetch/XHR
+delay and JSON-response simulation, but cannot reliably delay arbitrary network
+traffic or rewrite general response bodies. Those capabilities require a future
+local proxy companion.
 
 See [`docs/roadmap.md`](./roadmap.md) for the planned capability breakdown.

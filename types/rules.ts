@@ -26,6 +26,12 @@ export type RuleAction =
       type: 'delayRequest';
       requestPattern: string;
       delayMs: number;
+    }
+  | {
+      type: 'mockJsonResponse';
+      requestPattern: string;
+      statusCode: number;
+      responseBody: string;
     };
 
 export type QueryParameter = {

@@ -72,7 +72,8 @@ export function compileRules(rules: InterceptorRule[]): BrowserRule[] {
       !rule.enabled ||
       rule.action.type === 'injectCss' ||
       rule.action.type === 'injectJavaScript' ||
-      rule.action.type === 'delayRequest'
+      rule.action.type === 'delayRequest' ||
+      rule.action.type === 'mockJsonResponse'
     ) {
       return [];
     }

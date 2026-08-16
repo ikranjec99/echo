@@ -95,6 +95,14 @@ function isRuleAction(value: unknown): value is RuleAction {
     return typeof action.script === 'string';
   }
 
+  if (action.type === 'mockJsonResponse') {
+    return (
+      typeof action.requestPattern === 'string' &&
+      typeof action.statusCode === 'number' &&
+      typeof action.responseBody === 'string'
+    );
+  }
+
   return (
     action.type === 'delayRequest' &&
     typeof action.requestPattern === 'string' &&
