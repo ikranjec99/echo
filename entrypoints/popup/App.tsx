@@ -1,6 +1,17 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from 'react';
 import { useStore } from 'zustand';
 import { browser } from 'wxt/browser';
+import {
+  parseRuleBackup,
+  prepareRulesForImport,
+  serializeRuleBackup,
+} from '../../lib/rule-backup';
 import { validateRuleDraft } from '../../lib/rule-validation';
 import {
   formatAddOrReplaceParams,
@@ -26,6 +37,58 @@ import { interceptionStore } from './interception-store';
 import { rulesStore } from './rules-store';
 
 type RuleActionType = InterceptorRule['action']['type'];
+
+const ACTION_LABELS: Record<RuleActionType, string> = {
+  block: 'Block',
+  redirect: 'Redirect',
+  modifyQuery: 'Query',
+  modifyRequestHeaders: 'Request headers',
+  modifyResponseHeaders: 'Response headers',
+  injectCss: 'CSS',
+  injectJavaScript: 'JavaScript',
+  delayRequest: 'Delay',
+};
+
+function getRuleSearchText(rule: InterceptorRule): string {
+  const actionDetails = (() => {
+    switch (rule.action.type) {
+      case 'redirect':
+        return rule.action.targetUrl;
+      case 'modifyQuery':
+        return [
+          ...rule.action.addOrReplaceParams.flatMap(({ key, value }) => [
+            key,
+            value,
+          ]),
+          ...rule.action.removeParams,
+        ].join(' ');
+      case 'modifyRequestHeaders':
+        return rule.action.requestHeaders
+          .flatMap((operation) => [
+            operation.header,
+            operation.operation === 'set' ? operation.value : '',
+          ])
+          .join(' ');
+      case 'modifyResponseHeaders':
+        return rule.action.responseHeaders
+          .flatMap((operation) => [
+            operation.header,
+            operation.operation === 'set' ? operation.value : '',
+          ])
+          .join(' ');
+      case 'injectCss':
+        return rule.action.css;
+      case 'injectJavaScript':
+        return rule.action.script;
+      case 'delayRequest':
+        return `${rule.action.requestPattern} ${rule.action.delayMs}`;
+      case 'block':
+        return '';
+    }
+  })();
+
+  return `${rule.name} ${rule.urlPattern} ${ACTION_LABELS[rule.action.type]} ${actionDetails}`.toLowerCase();
+}
 
 const ACTION_OPTIONS: Array<{
   type: RuleActionType;
@@ -87,11 +150,20 @@ const ACTION_OPTIONS: Array<{
 
 export default function App() {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const rulesScrollRef = useRef<HTMLDivElement>(null);
   const [selectedActionType, setSelectedActionType] =
     useState<RuleActionType | null>(null);
   const [userScriptsAvailable, setUserScriptsAvailable] = useState<
     boolean | null
   >(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [ruleSearch, setRuleSearch] = useState('');
+  const [ruleCategory, setRuleCategory] = useState<RuleActionType | 'all'>(
+    'all',
+  );
+  const [backupMessage, setBackupMessage] = useState<string | null>(null);
+  const [backupError, setBackupError] = useState<string | null>(null);
   const { closeEditor, createRule, editingRuleId, editRule } =
     useStore(editorStore);
   const {
@@ -111,11 +183,29 @@ export default function App() {
     setEnabled: setInterceptionEnabled,
     status: interceptionStatus,
   } = useStore(interceptionStore);
+  const normalizedRuleSearch = ruleSearch.trim().toLowerCase();
+  const filtersActive = normalizedRuleSearch !== '' || ruleCategory !== 'all';
+  const filteredRules = rules.filter(
+    (rule) =>
+      (ruleCategory === 'all' || rule.action.type === ruleCategory) &&
+      (!normalizedRuleSearch ||
+        getRuleSearchText(rule).includes(normalizedRuleSearch)),
+  );
 
   useEffect(() => {
     void loadRules();
     void loadInterceptionEnabled();
   }, [loadInterceptionEnabled, loadRules]);
+
+  useEffect(() => {
+    if (!backupMessage) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setBackupMessage(null), 2_000);
+
+    return () => window.clearTimeout(timeout);
+  }, [backupMessage]);
 
   useEffect(() => {
     if (selectedActionType !== 'injectJavaScript') {
@@ -175,6 +265,64 @@ export default function App() {
 
     if (confirmed) {
       await removeRule(rule.id);
+    }
+  }
+
+  function handleExportRules() {
+    setBackupMessage(null);
+    setBackupError(null);
+
+    const contents = serializeRuleBackup(rules);
+    const blobUrl = URL.createObjectURL(
+      new Blob([contents], { type: 'application/json' }),
+    );
+    const link = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+
+    link.href = blobUrl;
+    link.download = `echo-rules-${date}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 0);
+  }
+
+  async function handleImportRules(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    setBackupMessage(null);
+    setBackupError(null);
+
+    try {
+      if (file.size > 5_000_000) {
+        throw new Error('Rule backup files are limited to 5 MB.');
+      }
+
+      const importedRules = prepareRulesForImport(
+        parseRuleBackup(await file.text()),
+      );
+
+      for (const rule of importedRules) {
+        await saveRule(rule);
+
+        if (rulesStore.getState().status === 'error') {
+          throw new Error(
+            rulesStore.getState().errorMessage ??
+              'Could not save imported rules.',
+          );
+        }
+      }
+
+      setBackupMessage(
+        `Imported ${importedRules.length} ${importedRules.length === 1 ? 'rule' : 'rules'} as disabled copies.`,
+      );
+    } catch (error) {
+      setBackupError(
+        error instanceof Error ? error.message : 'Could not import this backup.',
+      );
     }
   }
 
@@ -330,6 +478,23 @@ export default function App() {
     closeRuleDialog();
   }
 
+  function clearRuleFilters() {
+    setRuleSearch('');
+    setRuleCategory('all');
+  }
+
+  function toggleRuleFilters() {
+    setFiltersOpen((open) => {
+      const nextOpen = !open;
+
+      if (nextOpen) {
+        rulesScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      return nextOpen;
+    });
+  }
+
   return (
     <main className="popup">
       <div className="popup-fixed">
@@ -379,9 +544,88 @@ export default function App() {
             <span className="switch-track" aria-hidden="true" />
           </label>
         </section>
+
+        <div className="backup-actions" aria-label="Rule backup actions">
+          <button
+            className="secondary-button backup-button"
+            type="button"
+            onClick={() => importInputRef.current?.click()}
+          >
+            Import rules
+          </button>
+          <button
+            className="secondary-button backup-button"
+            type="button"
+            disabled={rules.length === 0}
+            onClick={handleExportRules}
+          >
+            Export rules
+          </button>
+          <input
+            className="sr-only"
+            ref={importInputRef}
+            type="file"
+            accept="application/json,.json"
+            onChange={(event) => void handleImportRules(event)}
+          />
+        </div>
+
+        {rules.length > 0 && (
+          <div className="section-heading">
+            <h2 id="rules-title">Rules</h2>
+            <div className="spotlight-shell">
+              <button
+                className={`spotlight-search ${filtersOpen ? 'is-open' : ''} ${filtersActive ? 'has-filters' : ''} ${filtersOpen || filtersActive ? 'has-clear' : ''}`}
+                type="button"
+                aria-expanded={filtersOpen}
+                aria-controls="rule-filters"
+                onClick={toggleRuleFilters}
+              >
+                <svg aria-hidden="true" viewBox="0 0 20 20">
+                  <circle cx="8.5" cy="8.5" r="5.25" />
+                  <path d="m12.5 12.5 4 4" />
+                </svg>
+                <span>Search rules</span>
+                {filtersActive && (
+                  <span className="search-active-dot" aria-hidden="true" />
+                )}
+              </button>
+              {(filtersOpen || filtersActive) && (
+                <button
+                  className="spotlight-clear"
+                  type="button"
+                  aria-label="Clear search and close filters"
+                  onClick={() => {
+                    clearRuleFilters();
+                    setFiltersOpen(false);
+                  }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            <span className="rule-count">
+              {filtersActive
+                ? `${filteredRules.length}/${rules.length}`
+                : rules.length}
+            </span>
+          </div>
+        )}
       </div>
 
-      <div className="rules-scroll">
+      <div className="rules-scroll" ref={rulesScrollRef}>
+
+      {backupMessage && (
+        <p className="backup-message" role="status">
+          {backupMessage}
+        </p>
+      )}
+
+      {backupError && (
+        <p className="error-banner" role="alert">
+          {backupError}
+        </p>
+      )}
 
       {(errorMessage || interceptionErrorMessage) && (
         <p className="error-banner" role="alert">
@@ -403,19 +647,61 @@ export default function App() {
 
       {rules.length > 0 && (
         <section aria-labelledby="rules-title">
-          <div className="section-heading">
-            <h2 id="rules-title">Rules</h2>
-            <span>{rules.length}</span>
-          </div>
+          {filtersOpen && (
+            <div className="rule-filters" id="rule-filters">
+              <label className="filter-search">
+                <span className="sr-only">Search rules</span>
+                <input
+                  type="search"
+                  value={ruleSearch}
+                  placeholder="Search name, URL, or value…"
+                  onChange={(event) => setRuleSearch(event.currentTarget.value)}
+                />
+              </label>
 
-          <ul className="rule-list">
-            {rules.map((rule) => (
+              <div className="filter-chips" aria-label="Filter by interceptor type">
+                <button
+                  className={ruleCategory === 'all' ? 'is-selected' : ''}
+                  type="button"
+                  onClick={() => setRuleCategory('all')}
+                >
+                  All
+                </button>
+                {ACTION_OPTIONS.map((option) => (
+                  <button
+                    className={ruleCategory === option.type ? 'is-selected' : ''}
+                    key={option.type}
+                    type="button"
+                    onClick={() => setRuleCategory(option.type)}
+                  >
+                    {ACTION_LABELS[option.type]}
+                  </button>
+                ))}
+              </div>
+
+              {filtersActive && (
+                <button
+                  className="clear-filters"
+                  type="button"
+                  onClick={clearRuleFilters}
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          )}
+
+          {filteredRules.length > 0 ? (
+            <ul className="rule-list">
+            {filteredRules.map((rule) => (
               <li className="rule-card" key={rule.id}>
                 <div className="rule-copy">
                   <div className="rule-title-row">
-                    <h3>{rule.name}</h3>
+                    <h3 title={rule.name}>{rule.name}</h3>
+                  </div>
+                  <div className="rule-badge-row">
                     <span className={`rule-type rule-type-${rule.action.type}`}>
-                      {rule.action.type}
+                      {ACTION_LABELS[rule.action.type]}
                     </span>
                     {rule.action.type === 'delayRequest' && (
                       <span className="experimental-badge">Experimental</span>
@@ -540,7 +826,16 @@ export default function App() {
                 </div>
               </li>
             ))}
-          </ul>
+            </ul>
+          ) : (
+            <div className="no-filter-results">
+              <strong>No matching rules</strong>
+              <span>Try a different search or category.</span>
+              <button type="button" onClick={clearRuleFilters}>
+                Clear filters
+              </button>
+            </div>
+          )}
         </section>
       )}
       </div>

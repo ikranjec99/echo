@@ -102,7 +102,7 @@ function isRuleAction(value: unknown): value is RuleAction {
   );
 }
 
-function isInterceptorRule(value: unknown): value is InterceptorRule {
+export function isInterceptorRule(value: unknown): value is InterceptorRule {
   if (!value || typeof value !== 'object') {
     return false;
   }
