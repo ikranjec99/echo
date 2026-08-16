@@ -21,6 +21,11 @@ when formal releases begin.
 - Experimental page-level Fetch and XMLHttpRequest delay rules
 - Explicit Experimental labeling and aligned timing icon for delay rules
 - Fixed status header with independently scrollable rule content
+- Two-line rule names with readable action badges placed below the title
+- Expandable local rule search and interceptor-category filters
+- Centered Spotlight-style rule search trigger
+- One-click search reset and panel close control
+- Fixed Rules, Search, and rule-count toolbar above the scrollable rule list
 - Action-focused rule editor with branded interceptor type cards
 - Chrome URL-filter pattern validation
 - Persistent rules with `browser.storage.local`
