@@ -9,6 +9,10 @@ export type RuleAction =
   | {
       type: 'modifyRequestHeaders';
       requestHeaders: RequestHeaderOperation[];
+    }
+  | {
+      type: 'modifyResponseHeaders';
+      responseHeaders: ResponseHeaderOperation[];
     };
 
 export type QueryParameter = {
@@ -17,6 +21,10 @@ export type QueryParameter = {
 };
 
 export type RequestHeaderOperation =
+  | { operation: 'set'; header: string; value: string }
+  | { operation: 'remove'; header: string };
+
+export type ResponseHeaderOperation =
   | { operation: 'set'; header: string; value: string }
   | { operation: 'remove'; header: string };
 

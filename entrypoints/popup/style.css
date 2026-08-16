@@ -371,6 +371,11 @@ textarea:focus-visible {
   background: rgb(243 156 18 / 12%);
 }
 
+.rule-type-modifyResponseHeaders {
+  color: var(--color-accent-strong);
+  background: rgb(46 204 113 / 12%);
+}
+
 .rule-card code,
 .redirect-target {
   display: block;
@@ -554,7 +559,8 @@ textarea:focus-visible {
 }
 
 .action-card-redirect .action-icon,
-.action-card-modifyRequestHeaders .action-icon {
+.action-card-modifyRequestHeaders .action-icon,
+.action-card-modifyResponseHeaders .action-icon {
   background: var(--color-brand-accent);
 }
 

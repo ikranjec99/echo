@@ -100,6 +100,25 @@ describe('compileRules', () => {
     });
   });
 
+  it('compiles response-header modifications', () => {
+    const responseHeaders = [
+      {
+        operation: 'set' as const,
+        header: 'cache-control',
+        value: 'no-store',
+      },
+      { operation: 'remove' as const, header: 'server' },
+    ];
+    const rule = createRule({
+      action: { type: 'modifyResponseHeaders', responseHeaders },
+    });
+
+    expect(compileRules([rule])[0]?.action).toEqual({
+      type: 'modifyHeaders',
+      responseHeaders,
+    });
+  });
+
   it('assigns deterministic browser ids from source positions', () => {
     const rules = [
       createRule({ id: 'disabled', enabled: false }),

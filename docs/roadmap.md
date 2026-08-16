@@ -8,8 +8,8 @@ from features that require a different technical architecture.
 
 ### Request and response headers
 
-Status: request-header set and remove operations are implemented in the current
-development build. Response-header operations remain planned.
+Status: request- and response-header set and remove operations are implemented
+in the current development build.
 
 Add rules that can add, replace, or remove supported HTTP request and response
 headers with `declarativeNetRequest.modifyHeaders`.

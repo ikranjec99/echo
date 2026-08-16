@@ -45,10 +45,31 @@ function isRuleAction(value: unknown): value is RuleAction {
     return true;
   }
 
-  return (
+  if (
     action.type === 'modifyRequestHeaders' &&
     Array.isArray(action.requestHeaders) &&
     action.requestHeaders.every((operation) => {
+      if (!operation || typeof operation !== 'object') {
+        return false;
+      }
+
+      const headerOperation = operation as Record<string, unknown>;
+
+      return (
+        typeof headerOperation.header === 'string' &&
+        (headerOperation.operation === 'remove' ||
+          (headerOperation.operation === 'set' &&
+            typeof headerOperation.value === 'string'))
+      );
+    })
+  ) {
+    return true;
+  }
+
+  return (
+    action.type === 'modifyResponseHeaders' &&
+    Array.isArray(action.responseHeaders) &&
+    action.responseHeaders.every((operation) => {
       if (!operation || typeof operation !== 'object') {
         return false;
       }

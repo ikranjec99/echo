@@ -18,6 +18,7 @@ Echo is an early development preview. The current build supports:
 - Creating block and redirect rules
 - Adding, replacing, and removing URL query parameters
 - Setting and removing supported HTTP request headers
+- Setting and removing supported HTTP response headers
 - Chrome URL-filter patterns
 - Enabling and disabling individual rules
 - Pausing and resuming all interception without changing individual rules
@@ -33,6 +34,9 @@ limitations.
 Technical details are available in the [architecture guide](./docs/architecture.md)
 and [rule-syntax guide](./docs/rule-syntax.md). Current development changes are
 tracked in the [changelog](./CHANGELOG.md).
+
+Tested targets, expected API support, and browser-specific debugging behavior
+are documented in the [browser compatibility guide](./docs/browser-compatibility.md).
 
 ## Privacy
 
@@ -86,7 +90,7 @@ Open Echo from the browser toolbar, select **Add rule**, and provide:
 
 - A descriptive rule name
 - A Chrome URL-filter pattern
-- A block, redirect, query-parameter, or request-header action
+- A block, redirect, query-parameter, request-header, or response-header action
 - An absolute HTTP or HTTPS destination for redirects
 
 Example block pattern:

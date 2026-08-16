@@ -13,6 +13,12 @@ import {
   parseRemoveRequestHeaders,
   parseSetRequestHeaders,
 } from '../../lib/request-headers';
+import {
+  formatRemoveResponseHeaders,
+  formatSetResponseHeaders,
+  parseRemoveResponseHeaders,
+  parseSetResponseHeaders,
+} from '../../lib/response-headers';
 import type { InterceptorRule, RuleDraft } from '../../types/rules';
 import { editorStore } from './editor-store';
 import { interceptionStore } from './interception-store';
@@ -49,6 +55,12 @@ const ACTION_OPTIONS: Array<{
     icon: '≡',
     title: 'Request headers',
     description: 'Set or remove outgoing HTTP headers.',
+  },
+  {
+    type: 'modifyResponseHeaders',
+    icon: '⇠',
+    title: 'Response headers',
+    description: 'Set or remove headers returned by a server.',
   },
 ];
 
@@ -144,7 +156,19 @@ export default function App() {
                   ),
                 ],
               }
-            : { type: 'block' as const };
+            : actionType === 'modifyResponseHeaders'
+              ? {
+                  type: 'modifyResponseHeaders' as const,
+                  responseHeaders: [
+                    ...parseSetResponseHeaders(
+                      String(formData.get('setResponseHeaders') ?? ''),
+                    ),
+                    ...parseRemoveResponseHeaders(
+                      String(formData.get('removeResponseHeaders') ?? ''),
+                    ),
+                  ],
+                }
+              : { type: 'block' as const };
     const draft: RuleDraft = {
       name: String(formData.get('name') ?? '').trim(),
       enabled: editingRule?.enabled ?? true,
@@ -171,6 +195,12 @@ export default function App() {
     const removeRequestHeadersInput = form.elements.namedItem(
       'removeRequestHeaders',
     ) as HTMLTextAreaElement;
+    const setResponseHeadersInput = form.elements.namedItem(
+      'setResponseHeaders',
+    ) as HTMLTextAreaElement;
+    const removeResponseHeadersInput = form.elements.namedItem(
+      'removeResponseHeaders',
+    ) as HTMLTextAreaElement;
 
     nameInput.setCustomValidity(errors.name ?? '');
     urlPatternInput.setCustomValidity(errors.urlPattern ?? '');
@@ -179,6 +209,10 @@ export default function App() {
     removeParamsInput?.setCustomValidity(errors.queryParams ?? '');
     setRequestHeadersInput?.setCustomValidity(errors.requestHeaders ?? '');
     removeRequestHeadersInput?.setCustomValidity(errors.requestHeaders ?? '');
+    setResponseHeadersInput?.setCustomValidity(errors.responseHeaders ?? '');
+    removeResponseHeadersInput?.setCustomValidity(
+      errors.responseHeaders ?? '',
+    );
 
     if (!form.reportValidity()) {
       return;
@@ -306,6 +340,18 @@ export default function App() {
                       ).length}{' '}
                       set ·{' '}
                       {rule.action.requestHeaders.filter(
+                        ({ operation }) => operation === 'remove',
+                      ).length}{' '}
+                      removed
+                    </p>
+                  )}
+                  {rule.action.type === 'modifyResponseHeaders' && (
+                    <p className="redirect-target">
+                      {rule.action.responseHeaders.filter(
+                        ({ operation }) => operation === 'set',
+                      ).length}{' '}
+                      set ·{' '}
+                      {rule.action.responseHeaders.filter(
                         ({ operation }) => operation === 'remove',
                       ).length}{' '}
                       removed
@@ -547,6 +593,49 @@ export default function App() {
                     />
                     <small>
                       One name per line. Sensitive values are never stored.
+                    </small>
+                  </label>
+                </div>
+              )}
+
+              {selectedActionType === 'modifyResponseHeaders' && (
+                <div className="action-fields">
+                  <label className="field">
+                    <span>Set response headers</span>
+                    <textarea
+                      name="setResponseHeaders"
+                      placeholder={'cache-control: no-store\nx-echo: working'}
+                      defaultValue={
+                        editingRule?.action.type === 'modifyResponseHeaders'
+                          ? formatSetResponseHeaders(
+                              editingRule.action.responseHeaders,
+                            )
+                          : ''
+                      }
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                    <small>One name: value header per line.</small>
+                  </label>
+                  <label className="field">
+                    <span>Remove response headers</span>
+                    <textarea
+                      name="removeResponseHeaders"
+                      placeholder={'x-powered-by\nserver'}
+                      defaultValue={
+                        editingRule?.action.type === 'modifyResponseHeaders'
+                          ? formatRemoveResponseHeaders(
+                              editingRule.action.responseHeaders,
+                            )
+                          : ''
+                      }
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                    <small>
+                      One name per line. Set-Cookie values are never stored.
                     </small>
                   </label>
                 </div>
