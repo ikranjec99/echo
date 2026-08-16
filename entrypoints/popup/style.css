@@ -376,6 +376,11 @@ textarea:focus-visible {
   background: rgb(46 204 113 / 12%);
 }
 
+.rule-type-injectCss {
+  color: #7d3c98;
+  background: rgb(142 68 173 / 12%);
+}
+
 .rule-card code,
 .redirect-target {
   display: block;
@@ -560,7 +565,8 @@ textarea:focus-visible {
 
 .action-card-redirect .action-icon,
 .action-card-modifyRequestHeaders .action-icon,
-.action-card-modifyResponseHeaders .action-icon {
+.action-card-modifyResponseHeaders .action-icon,
+.action-card-injectCss .action-icon {
   background: var(--color-brand-accent);
 }
 
@@ -623,6 +629,14 @@ textarea:focus-visible {
   border-radius: 9px;
   color: var(--color-ink);
   background: var(--color-canvas);
+}
+
+.field .code-editor {
+  min-height: 150px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  tab-size: 2;
 }
 
 .field textarea {

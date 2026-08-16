@@ -16,6 +16,8 @@ flowchart LR
     Worker --> Compiler["Rule compiler"]
     Compiler --> DNR["declarativeNetRequest"]
     DNR --> Requests["Browser requests"]
+    Storage --> Content["Content script"]
+    Content --> Pages["Matched page styles"]
 ```
 
 There is no backend, account system, analytics service, or cloud synchronization.
@@ -111,6 +113,18 @@ and newly compiled rules are added in the same atomic browser operation.
 
 Dynamic rules are scoped to Echo by the browser. Echo cannot replace another
 extension's rules.
+
+### CSS injection
+
+Location: `entrypoints/content.ts`, `lib/css-injection.ts`
+
+A local content script runs on permitted HTTP and HTTPS pages. It reads enabled
+CSS rules, matches browser extension page patterns, and creates isolated
+`style[data-echo-rule-id]` elements. Storage changes replace Echo-managed styles,
+so disabling a rule or globally pausing Echo removes the CSS immediately.
+
+CSS source is stored locally. Echo does not download remote styles or require the
+`scripting` permission for this feature.
 
 ## Rule data model
 

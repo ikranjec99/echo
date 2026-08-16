@@ -1,4 +1,5 @@
 import type { RuleDraft } from '../types/rules';
+import { validatePageMatchPattern } from './css-injection';
 
 export type RuleField =
   | 'name'
@@ -6,7 +7,8 @@ export type RuleField =
   | 'targetUrl'
   | 'queryParams'
   | 'requestHeaders'
-  | 'responseHeaders';
+  | 'responseHeaders'
+  | 'css';
 
 export type RuleValidationErrors = Partial<Record<RuleField, string>>;
 
@@ -61,7 +63,10 @@ export function validateRuleDraft(
     errors.name = 'Enter a rule name.';
   }
 
-  const urlPatternError = validateUrlPattern(rule.urlPattern);
+  const urlPatternError =
+    rule.action.type === 'injectCss'
+      ? validatePageMatchPattern(rule.urlPattern)
+      : validateUrlPattern(rule.urlPattern);
   if (urlPatternError) {
     errors.urlPattern = urlPatternError;
   }
@@ -137,6 +142,10 @@ export function validateRuleDraft(
     ) {
       errors.responseHeaders = 'Echo does not store Set-Cookie values.';
     }
+  }
+
+  if (rule.action.type === 'injectCss' && !rule.action.css.trim()) {
+    errors.css = 'Enter CSS to inject.';
   }
 
   return errors;

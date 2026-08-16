@@ -13,6 +13,10 @@ export type RuleAction =
   | {
       type: 'modifyResponseHeaders';
       responseHeaders: ResponseHeaderOperation[];
+    }
+  | {
+      type: 'injectCss';
+      css: string;
     };
 
 export type QueryParameter = {

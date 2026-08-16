@@ -56,15 +56,19 @@ function compileAction(
     };
   }
 
-  return {
-    type: 'redirect',
-    redirect: { url: action.targetUrl },
-  };
+  if (action.type === 'redirect') {
+    return {
+      type: 'redirect',
+      redirect: { url: action.targetUrl },
+    };
+  }
+
+  throw new Error('CSS injection actions cannot be compiled as DNR rules.');
 }
 
 export function compileRules(rules: InterceptorRule[]): BrowserRule[] {
   return rules.flatMap((rule, index) => {
-    if (!rule.enabled) {
+    if (!rule.enabled || rule.action.type === 'injectCss') {
       return [];
     }
 
