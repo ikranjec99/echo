@@ -381,6 +381,11 @@ textarea:focus-visible {
   background: rgb(142 68 173 / 12%);
 }
 
+.rule-type-injectJavaScript {
+  color: var(--color-primary-strong);
+  background: rgb(52 152 219 / 12%);
+}
+
 .rule-card code,
 .redirect-target {
   display: block;
@@ -566,7 +571,8 @@ textarea:focus-visible {
 .action-card-redirect .action-icon,
 .action-card-modifyRequestHeaders .action-icon,
 .action-card-modifyResponseHeaders .action-icon,
-.action-card-injectCss .action-icon {
+.action-card-injectCss .action-icon,
+.action-card-injectJavaScript .action-icon {
   background: var(--color-brand-accent);
 }
 
@@ -639,6 +645,39 @@ textarea:focus-visible {
   tab-size: 2;
 }
 
+.field .script-editor {
+  min-height: 190px;
+}
+
+.security-warning,
+.capability-warning {
+  display: grid;
+  gap: 5px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  font-size: 0.6875rem;
+  line-height: 1.45;
+}
+
+.security-warning {
+  border: 1px solid rgb(243 156 18 / 30%);
+  color: #7d5109;
+  background: rgb(243 156 18 / 9%);
+}
+
+.capability-warning {
+  border: 1px solid rgb(192 57 43 / 30%);
+  color: #922b21;
+  background: rgb(192 57 43 / 8%);
+}
+
+.primary-button:disabled {
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .field textarea {
   min-height: 68px;
   resize: vertical;
@@ -683,6 +722,14 @@ textarea:focus-visible {
   }
 
   .error-banner {
+    color: #f5b7b1;
+  }
+
+  .security-warning {
+    color: #f8c471;
+  }
+
+  .capability-warning {
     color: #f5b7b1;
   }
 

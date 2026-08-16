@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useStore } from 'zustand';
+import { browser } from 'wxt/browser';
 import { validateRuleDraft } from '../../lib/rule-validation';
 import {
   formatAddOrReplaceParams,
@@ -68,12 +69,21 @@ const ACTION_OPTIONS: Array<{
     title: 'Inject CSS',
     description: 'Apply local styles to matching pages.',
   },
+  {
+    type: 'injectJavaScript',
+    icon: '</>',
+    title: 'Inject JavaScript',
+    description: 'Run local code in an isolated user-script world.',
+  },
 ];
 
 export default function App() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [selectedActionType, setSelectedActionType] =
     useState<RuleActionType | null>(null);
+  const [userScriptsAvailable, setUserScriptsAvailable] = useState<
+    boolean | null
+  >(null);
   const { closeEditor, createRule, editingRuleId, editRule } =
     useStore(editorStore);
   const {
@@ -98,6 +108,38 @@ export default function App() {
     void loadRules();
     void loadInterceptionEnabled();
   }, [loadInterceptionEnabled, loadRules]);
+
+  useEffect(() => {
+    if (selectedActionType !== 'injectJavaScript') {
+      setUserScriptsAvailable(null);
+      return;
+    }
+
+    let active = true;
+
+    async function checkUserScripts() {
+      try {
+        if (!browser.userScripts) {
+          throw new Error('The userScripts API is unavailable.');
+        }
+
+        await browser.userScripts.getScripts();
+        if (active) {
+          setUserScriptsAvailable(true);
+        }
+      } catch {
+        if (active) {
+          setUserScriptsAvailable(false);
+        }
+      }
+    }
+
+    void checkUserScripts();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedActionType]);
 
   function openRuleDialog() {
     createRule();
@@ -179,7 +221,12 @@ export default function App() {
                     type: 'injectCss' as const,
                     css: String(formData.get('css') ?? ''),
                   }
-                : { type: 'block' as const };
+                : actionType === 'injectJavaScript'
+                  ? {
+                      type: 'injectJavaScript' as const,
+                      script: String(formData.get('script') ?? ''),
+                    }
+                  : { type: 'block' as const };
     const draft: RuleDraft = {
       name: String(formData.get('name') ?? '').trim(),
       enabled: editingRule?.enabled ?? true,
@@ -213,6 +260,9 @@ export default function App() {
       'removeResponseHeaders',
     ) as HTMLTextAreaElement;
     const cssInput = form.elements.namedItem('css') as HTMLTextAreaElement;
+    const scriptInput = form.elements.namedItem(
+      'script',
+    ) as HTMLTextAreaElement;
 
     nameInput.setCustomValidity(errors.name ?? '');
     urlPatternInput.setCustomValidity(errors.urlPattern ?? '');
@@ -226,6 +276,7 @@ export default function App() {
       errors.responseHeaders ?? '',
     );
     cssInput?.setCustomValidity(errors.css ?? '');
+    scriptInput?.setCustomValidity(errors.script ?? '');
 
     if (!form.reportValidity()) {
       return;
@@ -375,6 +426,11 @@ export default function App() {
                       {rule.action.css.length} CSS characters
                     </p>
                   )}
+                  {rule.action.type === 'injectJavaScript' && (
+                    <p className="redirect-target">
+                      {rule.action.script.length} JavaScript characters
+                    </p>
+                  )}
                 </div>
 
                 <div className="rule-controls">
@@ -503,14 +559,16 @@ export default function App() {
 
               <label className="field">
                 <span>
-                  {selectedActionType === 'injectCss'
+                  {selectedActionType === 'injectCss' ||
+                  selectedActionType === 'injectJavaScript'
                     ? 'Page match pattern'
                     : 'URL pattern'}
                 </span>
                 <input
                   name="urlPattern"
                   placeholder={
-                    selectedActionType === 'injectCss'
+                    selectedActionType === 'injectCss' ||
+                    selectedActionType === 'injectJavaScript'
                       ? '*://*.example.com/*'
                       : '||analytics.example.com^'
                   }
@@ -520,7 +578,8 @@ export default function App() {
                   onInput={(event) => event.currentTarget.setCustomValidity('')}
                 />
                 <small>
-                  {selectedActionType === 'injectCss'
+                  {selectedActionType === 'injectCss' ||
+                  selectedActionType === 'injectJavaScript'
                     ? 'Uses browser extension match-pattern syntax.'
                     : 'Uses Chrome URL filter syntax.'}
                 </small>
@@ -696,6 +755,48 @@ export default function App() {
                 </div>
               )}
 
+              {selectedActionType === 'injectJavaScript' && (
+                <div className="action-fields">
+                  <div className="security-warning" role="note">
+                    <strong>User-authored code can read and change matched pages.</strong>
+                    <span>
+                      Echo runs it locally in an isolated world with extension
+                      messaging disabled. Review every script before enabling it.
+                    </span>
+                  </div>
+
+                  {userScriptsAvailable === false && (
+                    <div className="capability-warning" role="alert">
+                      Enable <strong>Allow User Scripts</strong> from Echo’s
+                      extension details, then reload Echo. On Chromium versions
+                      before 138, enable Developer mode instead.
+                    </div>
+                  )}
+
+                  <label className="field">
+                    <span>JavaScript</span>
+                    <textarea
+                      className="code-editor script-editor"
+                      name="script"
+                      placeholder={'document.body.dataset.echo = "active";'}
+                      defaultValue={
+                        editingRule?.action.type === 'injectJavaScript'
+                          ? editingRule.action.script
+                          : ''
+                      }
+                      spellCheck="false"
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                    <small>
+                      Local source only. Maximum size: 50 KB. Remote imports are
+                      not provided by Echo.
+                    </small>
+                  </label>
+                </div>
+              )}
+
               <div className="dialog-actions">
                 <button
                   className="secondary-button"
@@ -704,7 +805,14 @@ export default function App() {
                 >
                   Cancel
                 </button>
-                <button className="primary-button" type="submit">
+                <button
+                  className="primary-button"
+                  type="submit"
+                  disabled={
+                    selectedActionType === 'injectJavaScript' &&
+                    userScriptsAvailable !== true
+                  }
+                >
                   {editingRule ? 'Save changes' : 'Save rule'}
                 </button>
               </div>

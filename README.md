@@ -20,6 +20,7 @@ Echo is an early development preview. The current build supports:
 - Setting and removing supported HTTP request headers
 - Setting and removing supported HTTP response headers
 - Injecting local CSS into explicitly matched pages
+- Running local JavaScript in isolated user-script worlds
 - Chrome URL-filter patterns
 - Enabling and disabling individual rules
 - Pausing and resuming all interception without changing individual rules
@@ -53,11 +54,17 @@ Echo requests:
 
 - `storage` to persist rules locally.
 - `declarativeNetRequestWithHostAccess` to apply browser request rules.
+- `userScripts` to run JavaScript explicitly created by the user in an isolated
+  browser-managed execution world.
 - `<all_urls>` because users can create rules for arbitrary websites and
   redirect rules require explicit host access.
 
 Broad host access is fundamental to a general-purpose request interceptor. Echo
 uses it only to apply rules created by the user.
+
+JavaScript injection additionally requires the browser's **Allow User Scripts**
+control. See the [user-script threat model](./docs/user-script-threat-model.md)
+before enabling this feature.
 
 ## Install locally
 

@@ -126,6 +126,21 @@ so disabling a rule or globally pausing Echo removes the CSS immediately.
 CSS source is stored locally. Echo does not download remote styles or require the
 `scripting` permission for this feature.
 
+### JavaScript injection
+
+Locations: `lib/user-script-sync.ts`, `entrypoints/background.ts`
+
+The background worker registers enabled JavaScript rules with the browser's
+`userScripts` API. Scripts run at `document_idle` in the isolated `USER_SCRIPT`
+world. Messaging is disabled and a restrictive CSP is configured when supported.
+Synchronization unregisters only Echo-prefixed user scripts before restoring the
+current enabled set. Global pause therefore removes registered JavaScript.
+Effects already produced in an open document cannot be generically undone and
+remain until the page is reloaded or the script performs its own cleanup.
+
+See [`docs/user-script-threat-model.md`](./user-script-threat-model.md) for the
+security boundary and explicit non-goals.
+
 ## Rule data model
 
 Location: `types/rules.ts`

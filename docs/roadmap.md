@@ -54,8 +54,8 @@ Implementation direction:
 
 ### Script and style injection
 
-Status: local CSS injection is implemented in the current development build.
-JavaScript injection remains planned.
+Status: local CSS and isolated JavaScript injection are implemented in the
+current Chromium development build.
 
 Allow users to inject local JavaScript or CSS into explicitly matched pages.
 

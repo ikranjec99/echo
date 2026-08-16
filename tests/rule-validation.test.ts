@@ -184,4 +184,14 @@ describe('validateRuleDraft', () => {
       }),
     ).toEqual({ css: 'Enter CSS to inject.' });
   });
+
+  it('validates JavaScript injection rules', () => {
+    expect(
+      validateRuleDraft({
+        ...validBlockRule,
+        urlPattern: '*://*.example.com/*',
+        action: { type: 'injectJavaScript', script: '' },
+      }),
+    ).toEqual({ script: 'Enter JavaScript to inject.' });
+  });
 });

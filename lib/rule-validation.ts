@@ -8,7 +8,8 @@ export type RuleField =
   | 'queryParams'
   | 'requestHeaders'
   | 'responseHeaders'
-  | 'css';
+  | 'css'
+  | 'script';
 
 export type RuleValidationErrors = Partial<Record<RuleField, string>>;
 
@@ -64,7 +65,8 @@ export function validateRuleDraft(
   }
 
   const urlPatternError =
-    rule.action.type === 'injectCss'
+    rule.action.type === 'injectCss' ||
+    rule.action.type === 'injectJavaScript'
       ? validatePageMatchPattern(rule.urlPattern)
       : validateUrlPattern(rule.urlPattern);
   if (urlPatternError) {
@@ -146,6 +148,14 @@ export function validateRuleDraft(
 
   if (rule.action.type === 'injectCss' && !rule.action.css.trim()) {
     errors.css = 'Enter CSS to inject.';
+  }
+
+  if (rule.action.type === 'injectJavaScript') {
+    if (!rule.action.script.trim()) {
+      errors.script = 'Enter JavaScript to inject.';
+    } else if (new Blob([rule.action.script]).size > 50_000) {
+      errors.script = 'JavaScript rules are limited to 50 KB.';
+    }
   }
 
   return errors;
