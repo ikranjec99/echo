@@ -19,6 +19,7 @@ Echo is an early development preview. The current build supports:
 - Adding, replacing, and removing URL query parameters
 - Setting and removing supported HTTP request headers
 - Setting and removing supported HTTP response headers
+- Injecting local CSS into explicitly matched pages
 - Chrome URL-filter patterns
 - Enabling and disabling individual rules
 - Pausing and resuming all interception without changing individual rules

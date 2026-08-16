@@ -63,6 +63,16 @@ describe('compileRules', () => {
     expect(compileRules([createRule({ enabled: false })])).toEqual([]);
   });
 
+  it('leaves CSS injection rules to the content-script engine', () => {
+    expect(
+      compileRules([
+        createRule({
+          action: { type: 'injectCss', css: 'body { color: red; }' },
+        }),
+      ]),
+    ).toEqual([]);
+  });
+
   it('compiles query-parameter transformations', () => {
     const rule = createRule({
       action: {

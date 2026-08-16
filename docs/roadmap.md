@@ -54,6 +54,9 @@ Implementation direction:
 
 ### Script and style injection
 
+Status: local CSS injection is implemented in the current development build.
+JavaScript injection remains planned.
+
 Allow users to inject local JavaScript or CSS into explicitly matched pages.
 
 Planned work:

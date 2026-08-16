@@ -66,7 +66,7 @@ function isRuleAction(value: unknown): value is RuleAction {
     return true;
   }
 
-  return (
+  if (
     action.type === 'modifyResponseHeaders' &&
     Array.isArray(action.responseHeaders) &&
     action.responseHeaders.every((operation) => {
@@ -83,7 +83,11 @@ function isRuleAction(value: unknown): value is RuleAction {
             typeof headerOperation.value === 'string'))
       );
     })
-  );
+  ) {
+    return true;
+  }
+
+  return action.type === 'injectCss' && typeof action.css === 'string';
 }
 
 function isInterceptorRule(value: unknown): value is InterceptorRule {

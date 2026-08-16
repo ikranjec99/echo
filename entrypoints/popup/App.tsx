@@ -62,6 +62,12 @@ const ACTION_OPTIONS: Array<{
     title: 'Response headers',
     description: 'Set or remove headers returned by a server.',
   },
+  {
+    type: 'injectCss',
+    icon: '✦',
+    title: 'Inject CSS',
+    description: 'Apply local styles to matching pages.',
+  },
 ];
 
 export default function App() {
@@ -168,7 +174,12 @@ export default function App() {
                     ),
                   ],
                 }
-              : { type: 'block' as const };
+              : actionType === 'injectCss'
+                ? {
+                    type: 'injectCss' as const,
+                    css: String(formData.get('css') ?? ''),
+                  }
+                : { type: 'block' as const };
     const draft: RuleDraft = {
       name: String(formData.get('name') ?? '').trim(),
       enabled: editingRule?.enabled ?? true,
@@ -201,6 +212,7 @@ export default function App() {
     const removeResponseHeadersInput = form.elements.namedItem(
       'removeResponseHeaders',
     ) as HTMLTextAreaElement;
+    const cssInput = form.elements.namedItem('css') as HTMLTextAreaElement;
 
     nameInput.setCustomValidity(errors.name ?? '');
     urlPatternInput.setCustomValidity(errors.urlPattern ?? '');
@@ -213,6 +225,7 @@ export default function App() {
     removeResponseHeadersInput?.setCustomValidity(
       errors.responseHeaders ?? '',
     );
+    cssInput?.setCustomValidity(errors.css ?? '');
 
     if (!form.reportValidity()) {
       return;
@@ -357,6 +370,11 @@ export default function App() {
                       removed
                     </p>
                   )}
+                  {rule.action.type === 'injectCss' && (
+                    <p className="redirect-target">
+                      {rule.action.css.length} CSS characters
+                    </p>
+                  )}
                 </div>
 
                 <div className="rule-controls">
@@ -484,16 +502,28 @@ export default function App() {
               </label>
 
               <label className="field">
-                <span>URL pattern</span>
+                <span>
+                  {selectedActionType === 'injectCss'
+                    ? 'Page match pattern'
+                    : 'URL pattern'}
+                </span>
                 <input
                   name="urlPattern"
-                  placeholder="||analytics.example.com^"
+                  placeholder={
+                    selectedActionType === 'injectCss'
+                      ? '*://*.example.com/*'
+                      : '||analytics.example.com^'
+                  }
                   defaultValue={editingRule?.urlPattern}
                   autoComplete="off"
                   required
                   onInput={(event) => event.currentTarget.setCustomValidity('')}
                 />
-                <small>Uses Chrome URL filter syntax.</small>
+                <small>
+                  {selectedActionType === 'injectCss'
+                    ? 'Uses browser extension match-pattern syntax.'
+                    : 'Uses Chrome URL filter syntax.'}
+                </small>
               </label>
 
               {selectedActionType === 'redirect' && (
@@ -636,6 +666,31 @@ export default function App() {
                     />
                     <small>
                       One name per line. Set-Cookie values are never stored.
+                    </small>
+                  </label>
+                </div>
+              )}
+
+              {selectedActionType === 'injectCss' && (
+                <div className="action-fields">
+                  <label className="field">
+                    <span>CSS</span>
+                    <textarea
+                      className="code-editor"
+                      name="css"
+                      placeholder={'body {\n  outline: 3px solid #3498DB;\n}'}
+                      defaultValue={
+                        editingRule?.action.type === 'injectCss'
+                          ? editingRule.action.css
+                          : ''
+                      }
+                      spellCheck="false"
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                    <small>
+                      Stored locally and applied only to matching pages.
                     </small>
                   </label>
                 </div>

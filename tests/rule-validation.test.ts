@@ -174,4 +174,14 @@ describe('validateRuleDraft', () => {
       responseHeaders: 'Echo does not store Set-Cookie values.',
     });
   });
+
+  it('validates CSS injection rules', () => {
+    expect(
+      validateRuleDraft({
+        ...validBlockRule,
+        urlPattern: '*://*.example.com/*',
+        action: { type: 'injectCss', css: '' },
+      }),
+    ).toEqual({ css: 'Enter CSS to inject.' });
+  });
 });
