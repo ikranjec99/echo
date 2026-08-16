@@ -13,6 +13,8 @@ when formal releases begin.
 - React and TypeScript browser-extension foundation powered by WXT
 - Local block and fixed-destination redirect rules
 - Query-parameter add, replace, and remove rules
+- Request-header set and remove rules with sensitive-value safeguards
+- Action-focused rule editor with branded interceptor type cards
 - Chrome URL-filter pattern validation
 - Persistent rules with `browser.storage.local`
 - Zustand-backed loading, saving, toggling, editing, and deletion

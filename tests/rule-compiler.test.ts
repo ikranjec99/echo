@@ -85,6 +85,21 @@ describe('compileRules', () => {
     });
   });
 
+  it('compiles request-header modifications', () => {
+    const requestHeaders = [
+      { operation: 'set' as const, header: 'x-debug', value: 'true' },
+      { operation: 'remove' as const, header: 'referer' },
+    ];
+    const rule = createRule({
+      action: { type: 'modifyRequestHeaders', requestHeaders },
+    });
+
+    expect(compileRules([rule])[0]?.action).toEqual({
+      type: 'modifyHeaders',
+      requestHeaders,
+    });
+  });
+
   it('assigns deterministic browser ids from source positions', () => {
     const rules = [
       createRule({ id: 'disabled', enabled: false }),

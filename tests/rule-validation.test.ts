@@ -111,4 +111,36 @@ describe('validateRuleDraft', () => {
       queryParams: 'Each query parameter can appear only once.',
     });
   });
+
+  it('accepts request-header set and remove operations', () => {
+    expect(
+      validateRuleDraft({
+        ...validBlockRule,
+        action: {
+          type: 'modifyRequestHeaders',
+          requestHeaders: [
+            { operation: 'set', header: 'x-debug', value: 'true' },
+            { operation: 'remove', header: 'referer' },
+          ],
+        },
+      }),
+    ).toEqual({});
+  });
+
+  it('does not allow sensitive request-header values to be stored', () => {
+    expect(
+      validateRuleDraft({
+        ...validBlockRule,
+        action: {
+          type: 'modifyRequestHeaders',
+          requestHeaders: [
+            { operation: 'set', header: 'Authorization', value: 'secret' },
+          ],
+        },
+      }),
+    ).toEqual({
+      requestHeaders:
+        'Echo does not store authorization, cookie, or proxy credentials.',
+    });
+  });
 });

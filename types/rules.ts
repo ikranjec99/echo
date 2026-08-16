@@ -5,12 +5,20 @@ export type RuleAction =
       type: 'modifyQuery';
       addOrReplaceParams: QueryParameter[];
       removeParams: string[];
+    }
+  | {
+      type: 'modifyRequestHeaders';
+      requestHeaders: RequestHeaderOperation[];
     };
 
 export type QueryParameter = {
   key: string;
   value: string;
 };
+
+export type RequestHeaderOperation =
+  | { operation: 'set'; header: string; value: string }
+  | { operation: 'remove'; header: string };
 
 export type InterceptorRule = {
   id: string;

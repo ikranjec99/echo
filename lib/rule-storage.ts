@@ -29,7 +29,7 @@ function isRuleAction(value: unknown): value is RuleAction {
     return typeof action.targetUrl === 'string';
   }
 
-  return (
+  if (
     action.type === 'modifyQuery' &&
     Array.isArray(action.addOrReplaceParams) &&
     action.addOrReplaceParams.every(
@@ -41,6 +41,27 @@ function isRuleAction(value: unknown): value is RuleAction {
     ) &&
     Array.isArray(action.removeParams) &&
     action.removeParams.every((key) => typeof key === 'string')
+  ) {
+    return true;
+  }
+
+  return (
+    action.type === 'modifyRequestHeaders' &&
+    Array.isArray(action.requestHeaders) &&
+    action.requestHeaders.every((operation) => {
+      if (!operation || typeof operation !== 'object') {
+        return false;
+      }
+
+      const headerOperation = operation as Record<string, unknown>;
+
+      return (
+        typeof headerOperation.header === 'string' &&
+        (headerOperation.operation === 'remove' ||
+          (headerOperation.operation === 'set' &&
+            typeof headerOperation.value === 'string'))
+      );
+    })
   );
 }
 

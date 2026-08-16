@@ -1,10 +1,21 @@
 import type { RuleDraft } from '../types/rules';
 
-export type RuleField = 'name' | 'urlPattern' | 'targetUrl' | 'queryParams';
+export type RuleField =
+  | 'name'
+  | 'urlPattern'
+  | 'targetUrl'
+  | 'queryParams'
+  | 'requestHeaders';
 
 export type RuleValidationErrors = Partial<Record<RuleField, string>>;
 
 const SUPPORTED_REDIRECT_PROTOCOLS = new Set(['http:', 'https:']);
+const HEADER_NAME_PATTERN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/u;
+const SENSITIVE_REQUEST_HEADERS = new Set([
+  'authorization',
+  'cookie',
+  'proxy-authorization',
+]);
 
 export function validateUrlPattern(urlPattern: string): string | undefined {
   const pattern = urlPattern.trim();
@@ -74,6 +85,32 @@ export function validateRuleDraft(
       errors.queryParams = 'Query parameter names cannot be empty.';
     } else if (new Set(allKeys).size !== allKeys.length) {
       errors.queryParams = 'Each query parameter can appear only once.';
+    }
+  }
+
+  if (rule.action.type === 'modifyRequestHeaders') {
+    const operations = rule.action.requestHeaders;
+    const normalizedNames = operations.map(({ header }) =>
+      header.trim().toLowerCase(),
+    );
+
+    if (operations.length === 0) {
+      errors.requestHeaders = 'Set or remove at least one request header.';
+    } else if (
+      normalizedNames.some((header) => !HEADER_NAME_PATTERN.test(header))
+    ) {
+      errors.requestHeaders = 'Enter valid HTTP header names.';
+    } else if (new Set(normalizedNames).size !== normalizedNames.length) {
+      errors.requestHeaders = 'Each request header can appear only once.';
+    } else if (
+      operations.some(
+        ({ header, operation }) =>
+          operation === 'set' &&
+          SENSITIVE_REQUEST_HEADERS.has(header.trim().toLowerCase()),
+      )
+    ) {
+      errors.requestHeaders =
+        'Echo does not store authorization, cookie, or proxy credentials.';
     }
   }
 
