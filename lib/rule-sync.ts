@@ -19,6 +19,7 @@ export type DynamicRulesApi = {
 export async function synchronizeDynamicRules(
   ruleSource: RuleSource,
   dynamicRulesApi: DynamicRulesApi,
+  interceptionEnabled = true,
 ): Promise<void> {
   const [storedRules, installedRules] = await Promise.all([
     ruleSource.list(),
@@ -27,6 +28,6 @@ export async function synchronizeDynamicRules(
 
   await dynamicRulesApi.updateDynamicRules({
     removeRuleIds: installedRules.map(({ id }) => id),
-    addRules: compileRules(storedRules),
+    addRules: interceptionEnabled ? compileRules(storedRules) : [],
   });
 }

@@ -63,6 +63,28 @@ describe('compileRules', () => {
     expect(compileRules([createRule({ enabled: false })])).toEqual([]);
   });
 
+  it('compiles query-parameter transformations', () => {
+    const rule = createRule({
+      action: {
+        type: 'modifyQuery',
+        addOrReplaceParams: [{ key: 'debug', value: 'true' }],
+        removeParams: ['utm_source'],
+      },
+    });
+
+    expect(compileRules([rule])[0]?.action).toEqual({
+      type: 'redirect',
+      redirect: {
+        transform: {
+          queryTransform: {
+            addOrReplaceParams: [{ key: 'debug', value: 'true' }],
+            removeParams: ['utm_source'],
+          },
+        },
+      },
+    });
+  });
+
   it('assigns deterministic browser ids from source positions', () => {
     const rules = [
       createRule({ id: 'disabled', enabled: false }),

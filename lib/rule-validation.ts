@@ -1,6 +1,6 @@
 import type { RuleDraft } from '../types/rules';
 
-export type RuleField = 'name' | 'urlPattern' | 'targetUrl';
+export type RuleField = 'name' | 'urlPattern' | 'targetUrl' | 'queryParams';
 
 export type RuleValidationErrors = Partial<Record<RuleField, string>>;
 
@@ -58,6 +58,22 @@ export function validateRuleDraft(
     const targetUrlError = validateRedirectUrl(rule.action.targetUrl);
     if (targetUrlError) {
       errors.targetUrl = targetUrlError;
+    }
+  }
+
+  if (rule.action.type === 'modifyQuery') {
+    const { addOrReplaceParams, removeParams } = rule.action;
+    const allKeys = [
+      ...addOrReplaceParams.map(({ key }) => key.trim()),
+      ...removeParams.map((key) => key.trim()),
+    ];
+
+    if (allKeys.length === 0) {
+      errors.queryParams = 'Add or remove at least one query parameter.';
+    } else if (allKeys.some((key) => !key)) {
+      errors.queryParams = 'Query parameter names cannot be empty.';
+    } else if (new Set(allKeys).size !== allKeys.length) {
+      errors.queryParams = 'Each query parameter can appear only once.';
     }
   }
 

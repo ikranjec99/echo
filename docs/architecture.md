@@ -10,7 +10,7 @@ request rules.
 ```mermaid
 flowchart LR
     User["User"] --> Popup["React popup"]
-    Popup --> Store["Zustand rule store"]
+    Popup --> Store["Zustand stores"]
     Store --> Storage["browser.storage.local"]
     Storage --> Worker["Background service worker"]
     Worker --> Compiler["Rule compiler"]
@@ -31,6 +31,7 @@ The popup is responsible for:
 - Rendering saved rules
 - Collecting and validating rule input
 - Creating, editing, deleting, and toggling rules
+- Pausing and resuming all interception
 - Showing storage errors and explicit enabled state
 
 The popup does not call `declarativeNetRequest` directly. Popup pages are
@@ -42,6 +43,7 @@ interception state.
 Locations:
 
 - `store/rules-store.ts`
+- `store/interception-store.ts`
 - `entrypoints/popup/editor-store.ts`
 
 The rule store coordinates asynchronous persistence and exposes loading, ready,
@@ -53,12 +55,15 @@ rule store and persistent browser storage.
 
 ### Persistent storage
 
-Location: `lib/rule-storage.ts`
+Locations: `lib/rule-storage.ts`, `lib/interception-storage.ts`
 
 Rules are stored under the `rules` key in `browser.storage.local`. Storage is
 local to the browser profile and survives browser exits, computer restarts, and
 normal extension updates. Removing the extension or browser profile removes the
 data.
+
+The global interception state is stored under `interceptionEnabled` and defaults
+to enabled for new and existing installations.
 
 Stored values pass runtime shape checks before they enter application state.
 Malformed records are ignored rather than compiled into browser rules.
@@ -74,6 +79,7 @@ the browser request engine. It requests synchronization:
 - When Echo is installed or updated
 - When the browser starts
 - When the local `rules` value changes
+- When the local `interceptionEnabled` value changes
 
 Synchronization requests are queued so overlapping storage events cannot race
 each other.
@@ -87,7 +93,8 @@ The compiler is a pure function that:
 1. Receives all stored Echo rules.
 2. Excludes disabled rules.
 3. Assigns deterministic positive numeric browser rule IDs.
-4. Converts block and redirect actions to Manifest V3 DNR actions.
+4. Converts block, redirect, and query-parameter actions to Manifest V3 DNR
+   actions.
 5. Adds explicit request resource types for Chrome, Brave, and Firefox
    compatibility.
 
@@ -152,6 +159,17 @@ Switch change
 
 A disabled rule remains stored but is absent from the browser's dynamic rules.
 
+### Pause or resume all interception
+
+```text
+Global switch change
+→ persist interceptionEnabled
+→ storage change event
+→ remove all dynamic rules while paused, or restore enabled rules when resumed
+```
+
+Pausing does not modify or delete any individual rule.
+
 ### Delete
 
 ```text
@@ -193,6 +211,7 @@ Unit tests cover:
 - Block and redirect compilation
 - Explicit request resource types
 - Dynamic-rule replacement
+- Persistent global pause behavior
 - Zustand loading, saving, toggling, deletion, and failures
 
 Browser behavior still requires manual integration testing because unit tests do

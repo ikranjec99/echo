@@ -81,4 +81,34 @@ describe('validateRuleDraft', () => {
       urlPattern: 'Enter a URL pattern.',
     });
   });
+
+  it('requires at least one query-parameter operation', () => {
+    expect(
+      validateRuleDraft({
+        ...validBlockRule,
+        action: {
+          type: 'modifyQuery',
+          addOrReplaceParams: [],
+          removeParams: [],
+        },
+      }),
+    ).toEqual({
+      queryParams: 'Add or remove at least one query parameter.',
+    });
+  });
+
+  it('rejects duplicate query parameters across operations', () => {
+    expect(
+      validateRuleDraft({
+        ...validBlockRule,
+        action: {
+          type: 'modifyQuery',
+          addOrReplaceParams: [{ key: 'debug', value: 'true' }],
+          removeParams: ['debug'],
+        },
+      }),
+    ).toEqual({
+      queryParams: 'Each query parameter can appear only once.',
+    });
+  });
 });

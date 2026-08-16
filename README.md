@@ -16,8 +16,10 @@ that stay on their device. It is built with React, TypeScript, Zustand, and WXT.
 Echo is an early development preview. The current build supports:
 
 - Creating block and redirect rules
+- Adding, replacing, and removing URL query parameters
 - Chrome URL-filter patterns
 - Enabling and disabling individual rules
+- Pausing and resuming all interception without changing individual rules
 - Editing and deleting rules
 - Persistent local browser storage
 - Live Manifest V3 dynamic-rule synchronization
@@ -83,7 +85,7 @@ Open Echo from the browser toolbar, select **Add rule**, and provide:
 
 - A descriptive rule name
 - A Chrome URL-filter pattern
-- A block or redirect action
+- A block, redirect, or query-parameter action
 - An absolute HTTP or HTTPS destination for redirects
 
 Example block pattern:
@@ -94,6 +96,10 @@ Example block pattern:
 
 An enabled rule has a green switch and is installed into the browser's dynamic
 request rules. A disabled rule remains saved but does not affect requests.
+
+The global Echo switch temporarily removes all active browser rules. Resuming
+Echo restores the individually enabled rules, and the paused state persists
+across browser and computer restarts.
 
 ## Development
 

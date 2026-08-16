@@ -28,6 +28,20 @@ function compileAction(
     return { type: 'block' };
   }
 
+  if (action.type === 'modifyQuery') {
+    return {
+      type: 'redirect',
+      redirect: {
+        transform: {
+          queryTransform: {
+            addOrReplaceParams: action.addOrReplaceParams,
+            removeParams: action.removeParams,
+          },
+        },
+      },
+    };
+  }
+
   return {
     type: 'redirect',
     redirect: { url: action.targetUrl },

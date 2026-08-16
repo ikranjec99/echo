@@ -33,7 +33,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -188,7 +189,8 @@ h1::after {
 
 button:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+textarea:focus-visible {
   outline: 3px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
@@ -205,6 +207,50 @@ select:focus-visible {
   color: #922b21;
   background: rgb(192 57 43 / 8%);
   font-size: 0.875rem;
+}
+
+.interception-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid rgb(46 204 113 / 28%);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  background: rgb(46 204 113 / 8%);
+}
+
+.interception-control.is-paused {
+  border-color: rgb(93 109 126 / 28%);
+  background: rgb(93 109 126 / 9%);
+}
+
+.interception-label {
+  margin-bottom: 3px;
+  color: var(--color-accent-strong);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.interception-control.is-paused .interception-label {
+  color: var(--color-muted);
+}
+
+.interception-description {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+.master-switch {
+  display: block;
+}
+
+.switch input:disabled + .switch-track {
+  cursor: wait;
+  opacity: 0.55;
 }
 
 .section-heading {
@@ -313,6 +359,11 @@ select:focus-visible {
 .rule-type-redirect {
   color: var(--color-primary-strong);
   background: rgb(52 152 219 / 12%);
+}
+
+.rule-type-modifyQuery {
+  color: #7d3c98;
+  background: rgb(142 68 173 / 12%);
 }
 
 .rule-card code,
@@ -443,13 +494,19 @@ select:focus-visible {
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   width: 100%;
   padding: 10px 11px;
   border: 1px solid var(--color-border);
   border-radius: 9px;
   color: var(--color-ink);
   background: var(--color-canvas);
+}
+
+.field textarea {
+  min-height: 68px;
+  resize: vertical;
 }
 
 .field small {
