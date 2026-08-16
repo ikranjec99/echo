@@ -93,8 +93,8 @@ The compiler is a pure function that:
 1. Receives all stored Echo rules.
 2. Excludes disabled rules.
 3. Assigns deterministic positive numeric browser rule IDs.
-4. Converts block, redirect, and query-parameter actions to Manifest V3 DNR
-   actions.
+4. Converts block, redirect, query-parameter, and request-header actions to
+   Manifest V3 DNR actions.
 5. Adds explicit request resource types for Chrome, Brave, and Firefox
    compatibility.
 

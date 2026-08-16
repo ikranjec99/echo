@@ -1,4 +1,4 @@
-import { useEffect, useRef, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useStore } from 'zustand';
 import { validateRuleDraft } from '../../lib/rule-validation';
 import {
@@ -7,13 +7,55 @@ import {
   parseAddOrReplaceParams,
   parseRemoveParams,
 } from '../../lib/query-parameters';
+import {
+  formatRemoveRequestHeaders,
+  formatSetRequestHeaders,
+  parseRemoveRequestHeaders,
+  parseSetRequestHeaders,
+} from '../../lib/request-headers';
 import type { InterceptorRule, RuleDraft } from '../../types/rules';
 import { editorStore } from './editor-store';
 import { interceptionStore } from './interception-store';
 import { rulesStore } from './rules-store';
 
+type RuleActionType = InterceptorRule['action']['type'];
+
+const ACTION_OPTIONS: Array<{
+  type: RuleActionType;
+  icon: string;
+  title: string;
+  description: string;
+}> = [
+  {
+    type: 'block',
+    icon: '⊘',
+    title: 'Block request',
+    description: 'Stop matching requests before they are sent.',
+  },
+  {
+    type: 'redirect',
+    icon: '↗',
+    title: 'Redirect request',
+    description: 'Send matching requests to another URL.',
+  },
+  {
+    type: 'modifyQuery',
+    icon: '?',
+    title: 'Query parameters',
+    description: 'Add, replace, or remove URL parameters.',
+  },
+  {
+    type: 'modifyRequestHeaders',
+    icon: '≡',
+    title: 'Request headers',
+    description: 'Set or remove outgoing HTTP headers.',
+  },
+];
+
 export default function App() {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [selectedActionType, setSelectedActionType] =
+    useState<RuleActionType | null>(null);
   const { closeEditor, createRule, editingRuleId, editRule } =
     useStore(editorStore);
   const {
@@ -41,16 +83,20 @@ export default function App() {
 
   function openRuleDialog() {
     createRule();
+    setSelectedActionType(null);
     dialogRef.current?.showModal();
   }
 
   function closeRuleDialog() {
     dialogRef.current?.close();
     closeEditor();
+    setSelectedActionType(null);
   }
 
   function openEditDialog(ruleId: string) {
+    const rule = rules.find(({ id }) => id === ruleId);
     editRule(ruleId);
+    setSelectedActionType(rule?.action.type ?? 'block');
     dialogRef.current?.showModal();
   }
 
@@ -69,7 +115,7 @@ export default function App() {
 
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const actionType = formData.get('action');
+    const actionType = selectedActionType;
     const action =
       actionType === 'redirect'
         ? {
@@ -86,10 +132,22 @@ export default function App() {
                 String(formData.get('removeParams') ?? ''),
               ),
             }
-          : { type: 'block' as const };
+          : actionType === 'modifyRequestHeaders'
+            ? {
+                type: 'modifyRequestHeaders' as const,
+                requestHeaders: [
+                  ...parseSetRequestHeaders(
+                    String(formData.get('setRequestHeaders') ?? ''),
+                  ),
+                  ...parseRemoveRequestHeaders(
+                    String(formData.get('removeRequestHeaders') ?? ''),
+                  ),
+                ],
+              }
+            : { type: 'block' as const };
     const draft: RuleDraft = {
       name: String(formData.get('name') ?? '').trim(),
-      enabled: true,
+      enabled: editingRule?.enabled ?? true,
       urlPattern: String(formData.get('urlPattern') ?? '').trim(),
       action,
     };
@@ -107,12 +165,20 @@ export default function App() {
     const removeParamsInput = form.elements.namedItem(
       'removeParams',
     ) as HTMLTextAreaElement;
+    const setRequestHeadersInput = form.elements.namedItem(
+      'setRequestHeaders',
+    ) as HTMLTextAreaElement;
+    const removeRequestHeadersInput = form.elements.namedItem(
+      'removeRequestHeaders',
+    ) as HTMLTextAreaElement;
 
     nameInput.setCustomValidity(errors.name ?? '');
     urlPatternInput.setCustomValidity(errors.urlPattern ?? '');
-    targetUrlInput.setCustomValidity(errors.targetUrl ?? '');
-    addOrReplaceParamsInput.setCustomValidity(errors.queryParams ?? '');
-    removeParamsInput.setCustomValidity(errors.queryParams ?? '');
+    targetUrlInput?.setCustomValidity(errors.targetUrl ?? '');
+    addOrReplaceParamsInput?.setCustomValidity(errors.queryParams ?? '');
+    removeParamsInput?.setCustomValidity(errors.queryParams ?? '');
+    setRequestHeadersInput?.setCustomValidity(errors.requestHeaders ?? '');
+    removeRequestHeadersInput?.setCustomValidity(errors.requestHeaders ?? '');
 
     if (!form.reportValidity()) {
       return;
@@ -233,6 +299,18 @@ export default function App() {
                       {rule.action.removeParams.length} removed
                     </p>
                   )}
+                  {rule.action.type === 'modifyRequestHeaders' && (
+                    <p className="redirect-target">
+                      {rule.action.requestHeaders.filter(
+                        ({ operation }) => operation === 'set',
+                      ).length}{' '}
+                      set ·{' '}
+                      {rule.action.requestHeaders.filter(
+                        ({ operation }) => operation === 'remove',
+                      ).length}{' '}
+                      removed
+                    </p>
+                  )}
                 </div>
 
                 <div className="rule-controls">
@@ -277,16 +355,20 @@ export default function App() {
 
       <dialog className="rule-dialog" ref={dialogRef}>
         <form
-          key={editingRuleId ?? 'new-rule'}
+          key={`${editingRuleId ?? 'new-rule'}-${selectedActionType ?? 'choose'}`}
           method="dialog"
           onSubmit={(event) => void handleSubmit(event)}
         >
           <div className="dialog-heading">
             <div>
-              <p className="eyebrow">
-                {editingRule ? 'Update interceptor' : 'New interceptor'}
-              </p>
-              <h2>{editingRule ? 'Edit rule' : 'Add rule'}</h2>
+              <p className="eyebrow">Rule editor</p>
+              <h2>
+                {selectedActionType
+                  ? editingRule
+                    ? 'Edit rule'
+                    : 'Configure rule'
+                  : 'Choose interceptor type'}
+              </h2>
             </div>
             <button
               className="icon-button"
@@ -298,99 +380,192 @@ export default function App() {
             </button>
           </div>
 
-          <label className="field">
-            <span>Name</span>
-            <input
-              name="name"
-              placeholder="Block analytics"
-              defaultValue={editingRule?.name}
-              autoComplete="off"
-              required
-              onInput={(event) => event.currentTarget.setCustomValidity('')}
-            />
-          </label>
+          {!selectedActionType ? (
+            <>
+              <p className="action-picker-intro">
+                What should Echo do when a request matches?
+              </p>
+              <div className="action-grid">
+                {ACTION_OPTIONS.map((option) => (
+                  <button
+                    className={`action-card action-card-${option.type}`}
+                    key={option.type}
+                    type="button"
+                    onClick={() => setSelectedActionType(option.type)}
+                  >
+                    <span className="action-icon" aria-hidden="true">
+                      {option.icon}
+                    </span>
+                    <strong>{option.title}</strong>
+                    <span>{option.description}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                className="selected-action"
+                type="button"
+                onClick={() => setSelectedActionType(null)}
+              >
+                <span className="selected-action-icon" aria-hidden="true">
+                  {ACTION_OPTIONS.find(
+                    ({ type }) => type === selectedActionType,
+                  )?.icon}
+                </span>
+                <span>
+                  <small>Interceptor type</small>
+                  <strong>
+                    {ACTION_OPTIONS.find(
+                      ({ type }) => type === selectedActionType,
+                    )?.title}
+                  </strong>
+                </span>
+                <span className="change-action">Change</span>
+              </button>
 
-          <label className="field">
-            <span>URL pattern</span>
-            <input
-              name="urlPattern"
-              placeholder="||analytics.example.com^"
-              defaultValue={editingRule?.urlPattern}
-              autoComplete="off"
-              required
-              onInput={(event) => event.currentTarget.setCustomValidity('')}
-            />
-            <small>Uses Chrome URL filter syntax.</small>
-          </label>
+              <label className="field">
+                <span>Name</span>
+                <input
+                  name="name"
+                  placeholder="Give this rule a clear name"
+                  defaultValue={editingRule?.name}
+                  autoComplete="off"
+                  required
+                  onInput={(event) => event.currentTarget.setCustomValidity('')}
+                />
+              </label>
 
-          <label className="field">
-            <span>Action</span>
-            <select
-              name="action"
-              defaultValue={editingRule?.action.type ?? 'block'}
-            >
-              <option value="block">Block request</option>
-              <option value="redirect">Redirect request</option>
-              <option value="modifyQuery">Modify query parameters</option>
-            </select>
-          </label>
+              <label className="field">
+                <span>URL pattern</span>
+                <input
+                  name="urlPattern"
+                  placeholder="||analytics.example.com^"
+                  defaultValue={editingRule?.urlPattern}
+                  autoComplete="off"
+                  required
+                  onInput={(event) => event.currentTarget.setCustomValidity('')}
+                />
+                <small>Uses Chrome URL filter syntax.</small>
+              </label>
 
-          <label className="field">
-            <span>Add or replace query parameters</span>
-            <textarea
-              name="addOrReplaceParams"
-              placeholder={'environment=staging\ndebug=true'}
-              defaultValue={
-                editingRule?.action.type === 'modifyQuery'
-                  ? formatAddOrReplaceParams(
-                      editingRule.action.addOrReplaceParams,
-                    )
-                  : ''
-              }
-              onInput={(event) => event.currentTarget.setCustomValidity('')}
-            />
-            <small>One name=value pair per line. Values may be empty.</small>
-          </label>
+              {selectedActionType === 'redirect' && (
+                <label className="field">
+                  <span>Redirect URL</span>
+                  <input
+                    name="targetUrl"
+                    type="url"
+                    placeholder="http://localhost:3000"
+                    defaultValue={
+                      editingRule?.action.type === 'redirect'
+                        ? editingRule.action.targetUrl
+                        : ''
+                    }
+                    onInput={(event) =>
+                      event.currentTarget.setCustomValidity('')
+                    }
+                  />
+                  <small>Absolute HTTP or HTTPS destination.</small>
+                </label>
+              )}
 
-          <label className="field">
-            <span>Remove query parameters</span>
-            <textarea
-              name="removeParams"
-              placeholder={'utm_source\nutm_campaign'}
-              defaultValue={
-                editingRule?.action.type === 'modifyQuery'
-                  ? formatRemoveParams(editingRule.action.removeParams)
-                  : ''
-              }
-              onInput={(event) => event.currentTarget.setCustomValidity('')}
-            />
-            <small>One parameter name per line.</small>
-          </label>
+              {selectedActionType === 'modifyQuery' && (
+                <div className="action-fields">
+                  <label className="field">
+                    <span>Add or replace parameters</span>
+                    <textarea
+                      name="addOrReplaceParams"
+                      placeholder={'environment=staging\ndebug=true'}
+                      defaultValue={
+                        editingRule?.action.type === 'modifyQuery'
+                          ? formatAddOrReplaceParams(
+                              editingRule.action.addOrReplaceParams,
+                            )
+                          : ''
+                      }
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                    <small>One name=value pair per line.</small>
+                  </label>
+                  <label className="field">
+                    <span>Remove parameters</span>
+                    <textarea
+                      name="removeParams"
+                      placeholder={'utm_source\nutm_campaign'}
+                      defaultValue={
+                        editingRule?.action.type === 'modifyQuery'
+                          ? formatRemoveParams(editingRule.action.removeParams)
+                          : ''
+                      }
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                    <small>One parameter name per line.</small>
+                  </label>
+                </div>
+              )}
 
-          <label className="field">
-            <span>Redirect URL</span>
-            <input
-              name="targetUrl"
-              type="url"
-              placeholder="http://localhost:3000"
-              defaultValue={
-                editingRule?.action.type === 'redirect'
-                  ? editingRule.action.targetUrl
-                  : ''
-              }
-              onInput={(event) => event.currentTarget.setCustomValidity('')}
-            />
-            <small>Required only when the action is Redirect.</small>
-          </label>
+              {selectedActionType === 'modifyRequestHeaders' && (
+                <div className="action-fields">
+                  <label className="field">
+                    <span>Set request headers</span>
+                    <textarea
+                      name="setRequestHeaders"
+                      placeholder={'x-environment: staging\nx-debug: true'}
+                      defaultValue={
+                        editingRule?.action.type === 'modifyRequestHeaders'
+                          ? formatSetRequestHeaders(
+                              editingRule.action.requestHeaders,
+                            )
+                          : ''
+                      }
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                    <small>One name: value header per line.</small>
+                  </label>
+                  <label className="field">
+                    <span>Remove request headers</span>
+                    <textarea
+                      name="removeRequestHeaders"
+                      placeholder={'x-client-version\nreferer'}
+                      defaultValue={
+                        editingRule?.action.type === 'modifyRequestHeaders'
+                          ? formatRemoveRequestHeaders(
+                              editingRule.action.requestHeaders,
+                            )
+                          : ''
+                      }
+                      onInput={(event) =>
+                        event.currentTarget.setCustomValidity('')
+                      }
+                    />
+                    <small>
+                      One name per line. Sensitive values are never stored.
+                    </small>
+                  </label>
+                </div>
+              )}
 
-          <div className="dialog-actions">
-            <button className="secondary-button" type="button" onClick={closeRuleDialog}>
-              Cancel
-            </button>
-            <button className="primary-button" type="submit">
-              {editingRule ? 'Save changes' : 'Save rule'}
-            </button>
-          </div>
+              <div className="dialog-actions">
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={closeRuleDialog}
+                >
+                  Cancel
+                </button>
+                <button className="primary-button" type="submit">
+                  {editingRule ? 'Save changes' : 'Save rule'}
+                </button>
+              </div>
+            </>
+          )}
         </form>
       </dialog>
     </main>

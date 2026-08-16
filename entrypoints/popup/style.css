@@ -366,6 +366,11 @@ textarea:focus-visible {
   background: rgb(142 68 173 / 12%);
 }
 
+.rule-type-modifyRequestHeaders {
+  color: #b9770e;
+  background: rgb(243 156 18 / 12%);
+}
+
 .rule-card code,
 .redirect-target {
   display: block;
@@ -457,7 +462,8 @@ textarea:focus-visible {
 }
 
 .rule-dialog {
-  width: min(352px, calc(100vw - 32px));
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: 16px;
@@ -472,6 +478,8 @@ textarea:focus-visible {
 }
 
 .rule-dialog form {
+  overflow-y: auto;
+  max-height: calc(100vh - 26px);
   padding: 20px;
 }
 
@@ -482,6 +490,113 @@ textarea:focus-visible {
 .dialog-heading h2 {
   margin: 0;
   font-size: 1.25rem;
+}
+
+.action-picker-intro {
+  margin-bottom: 16px;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.action-card {
+  display: grid;
+  justify-items: start;
+  min-height: 138px;
+  padding: 15px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  box-shadow: 0 5px 14px rgb(23 32 42 / 5%);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.action-card:hover {
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 8px 20px rgb(52 152 219 / 14%);
+  transform: translateY(-2px);
+}
+
+.action-card strong {
+  align-self: end;
+  font-size: 0.8125rem;
+}
+
+.action-card > span:last-child {
+  color: var(--color-muted);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+.action-icon,
+.selected-action-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: #ffffff;
+  background: var(--color-brand-primary);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.action-card-redirect .action-icon,
+.action-card-modifyRequestHeaders .action-icon {
+  background: var(--color-brand-accent);
+}
+
+.selected-action {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 11px;
+  padding: 11px;
+  border: 1px solid rgb(52 152 219 / 24%);
+  border-radius: 12px;
+  margin-bottom: 18px;
+  color: var(--color-ink);
+  background: rgb(52 152 219 / 7%);
+  text-align: left;
+  cursor: pointer;
+}
+
+.selected-action > span:nth-child(2) {
+  display: grid;
+  gap: 2px;
+}
+
+.selected-action small {
+  color: var(--color-muted);
+  font-size: 0.625rem;
+}
+
+.selected-action strong {
+  font-size: 0.8125rem;
+}
+
+.change-action {
+  margin-left: auto;
+  color: var(--color-primary-strong);
+  font-size: 0.6875rem;
+  font-weight: 800;
+}
+
+.action-fields {
+  padding-top: 2px;
+  border-top: 1px solid var(--color-border);
 }
 
 .field {
